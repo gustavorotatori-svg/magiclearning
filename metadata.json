@@ -1,0 +1,6 @@
+{
+  "name": "Magic Learning – Portal Escolar & Gestão Pedagógica",
+  "description": "Plataforma de gestão escolar e portal da família: rotina diária, boletim pedagógico, portaria digital, cobranças Pix e comunicados em tempo real.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

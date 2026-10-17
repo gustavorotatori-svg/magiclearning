@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 🛡️ GLOBAL SAFETY NET: Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 🛡️ REUSABLE SECURITY PRIMITIVES & HELPER FUNCTIONS
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+
+    // 🛡️ SCHEMA VALIDATOR FOR USER PROFILES
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['displayName', 'preferences']) &&
+             data.displayName is string &&
+             data.displayName.size() <= 100 &&
+             data.preferences is map &&
+             (!('username' in data) || data.username == null || (data.username is string && data.username.size() <= 50)) &&
+             (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 255)) &&
+             (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 250000)) &&
+             (!('bio' in data) || data.bio == null || (data.bio is string && data.bio.size() <= 500)) &&
+             (!('selectedStudentId' in data) || data.selectedStudentId == null || (data.selectedStudentId is string && data.selectedStudentId.size() <= 100)) &&
+             (!('savedComunicadoIds' in data) || (data.savedComunicadoIds is list && data.savedComunicadoIds.size() <= 100)) &&
+             (!('savedMomentoIds' in data) || (data.savedMomentoIds is list && data.savedMomentoIds.size() <= 100)) &&
+             (!('joinedEventoIds' in data) || (data.joinedEventoIds is list && data.joinedEventoIds.size() <= 100)) &&
+             (!('activityHistory' in data) || (data.activityHistory is list && data.activityHistory.size() <= 150)) &&
+             (!('unlockedBadgeIds' in data) || (data.unlockedBadgeIds is list && data.unlockedBadgeIds.size() <= 100)) &&
+             (!('magicCoins' in data) || (data.magicCoins is int || data.magicCoins is number));
+    }
+
+    // 🛡️ SCHEMA VALIDATOR FOR OFFLINE SYNC LOG LEDGER
+    function isValidOfflineSyncLog(data) {
+      return data.keys().hasAll(['entity', 'action', 'timestamp', 'data', 'userUid']) &&
+             data.entity is string && data.entity.size() <= 50 &&
+             data.action is string && data.action.size() <= 50 &&
+             data.timestamp is int &&
+             data.data is string && data.data.size() <= 10000 &&
+             data.userUid is string && data.userUid.size() <= 128 &&
+             (!('userEmail' in data) || (data.userEmail is string && data.userEmail.size() <= 255)) &&
+             (!('synchronizedAt' in data) || (data.synchronizedAt is int));
+    }
+
+    // 🛡️ User profiles containing user preferences and saved item indexes
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow create, update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow delete, list: if false; // Prevent list enumeration or raw user deletions
+
+      // Permit subcollections only for the authenticated owner
+      match /{allPaths=**} {
+        allow read, write: if isOwner(userId) && isValidId(userId);
+      }
+    }
+
+    // 🛡️ Public diagnostic heartbeats for backend connectivity monitoring
+    match /system/{systemId} {
+      allow get: if isValidId(systemId);
+      allow list, write: if false; // Locked: Only readable individually by clients, non-writable
+    }
+
+    // 🛡️ Write-Only Append-Ledger for Offline Synchronizations (No scraping, immutable)
+    match /offline_sync_logs/{logId} {
+      allow create: if isSignedIn() && isValidId(logId) && isValidOfflineSyncLog(incoming()) && incoming().userUid == request.auth.uid;
+      allow read, update, delete: if false; // Hardened write-only audit trail
+    }
+    
+    // 🛡️ SCHEMA VALIDATOR FOR CONTENT REPORTS
+    function isValidContentReport(data) {
+      return data.keys().hasAll(['contentType', 'contentId', 'contentSnippet', 'reporterUserId', 'reason', 'timestamp', 'status']) &&
+             data.contentType in ['comunicado', 'comment', 'photo', 'occurrence', 'message'] &&
+             data.contentId is string && data.contentId.size() <= 128 &&
+             data.contentSnippet is string && data.contentSnippet.size() <= 2000 &&
+             data.reporterUserId is string && data.reporterUserId.size() <= 128 &&
+             data.reason in ['inappropriate_content', 'minor_privacy', 'bullying_harassment', 'spam_advertising', 'misinformation', 'other'] &&
+             data.timestamp is int &&
+             data.status in ['pending', 'under_review', 'resolved_removed', 'resolved_warned', 'dismissed'];
+    }
+
+    // 🛡️ SCHEMA VALIDATOR FOR USER WARNINGS
+    function isValidUserWarning(data) {
+      return data.keys().hasAll(['userId', 'userName', 'reason', 'severity', 'message', 'issuedBy', 'issuedAt', 'acknowledged']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() <= 100 &&
+             data.reason is string && data.reason.size() <= 255 &&
+             data.severity in ['leve', 'moderada', 'grave'] &&
+             data.message is string && data.message.size() <= 2000 &&
+             data.issuedBy is string && data.issuedBy.size() <= 100 &&
+             data.issuedAt is int &&
+             data.acknowledged is bool;
+    }
+
+    // 🛡️ Moderation Reports Queue
+    match /moderation_reports/{reportId} {
+      allow create: if isSignedIn() && isValidId(reportId) && isValidContentReport(incoming());
+      allow read, update: if isSignedIn() && isValidId(reportId);
+      allow delete: if false;
+    }
+
+    // 🛡️ User Institutional Warnings
+    match /user_warnings/{warningId} {
+      allow read: if isSignedIn() && isValidId(warningId);
+      allow create, update: if isSignedIn() && isValidId(warningId) && isValidUserWarning(incoming());
+      allow delete: if false;
+    }
+
+    // 🛡️ Static or In-Memory read-only content to prevent content spoofing on client
+    match /comunicados/{comunicadoId} {
+      allow read: if isValidId(comunicadoId);
+      allow write: if false;
+    }
+    
+    match /momentos/{momentoId} {
+      allow read: if isValidId(momentoId);
+      allow write: if false;
+    }
+    
+    match /eventos/{eventoId} {
+      allow read: if isValidId(eventoId);
+      allow write: if false;
+    }
+    
+    match /cobrancas/{cobrancaId} {
+      allow read, write: if false; // Private in-memory only
+    }
+  }
+}

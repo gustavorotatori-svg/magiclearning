@@ -1,0 +1,293 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and local configuration preferences",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "username": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 250000
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "selectedStudentId": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "preferences": {
+          "type": "object",
+          "description": "Onboarding customization preferences"
+        },
+        "savedComunicadoIds": {
+          "type": "array",
+          "description": "List of saved announcement document IDs"
+        },
+        "savedMomentoIds": {
+          "type": "array",
+          "description": "List of saved moments document IDs"
+        },
+        "joinedEventoIds": {
+          "type": "array",
+          "description": "List of joined events document IDs"
+        },
+        "activityHistory": {
+          "type": "array",
+          "description": "User activity ledger entries"
+        },
+        "unlockedBadgeIds": {
+          "type": "array",
+          "description": "Badges and achievements unlocked by user"
+        },
+        "magicCoins": {
+          "type": "number",
+          "description": "Merit points and sparks accumulated"
+        }
+      },
+      "required": ["displayName", "preferences"]
+    },
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "Interactive settings selected by the parent during onboarding",
+      "type": "object",
+      "properties": {
+        "studentName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "studentGrade": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "themeColor": {
+          "type": "string",
+          "enum": ["default", "royal", "emerald", "amber"]
+        },
+        "notificationCategory": {
+          "type": "string",
+          "enum": ["todos", "formais", "urgentes"]
+        }
+      }
+    },
+    "SystemHeartbeat": {
+      "title": "SystemHeartbeat",
+      "description": "System status parameters used for backend diagnostics and connectivity checks",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "updatedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["status"]
+    },
+    "OfflineSyncLog": {
+      "title": "OfflineSyncLog",
+      "description": "A secure ledger record of user operations synced from offline client state",
+      "type": "object",
+      "properties": {
+        "entity": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "data": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "userUid": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "userEmail": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "synchronizedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["entity", "action", "timestamp", "data", "userUid"]
+    },
+    "ContentReport": {
+      "title": "ContentReport",
+      "description": "User-submitted reports on inappropriate content or privacy violations",
+      "type": "object",
+      "properties": {
+        "contentType": {
+          "type": "string",
+          "enum": ["comunicado", "comment", "photo", "occurrence", "message"]
+        },
+        "contentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "contentTitle": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "contentSnippet": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "contentAuthorName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "contentAuthorId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "contentImageUrl": {
+          "type": "string",
+          "maxLength": 250000
+        },
+        "contentParentId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "reporterUserId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "reporterName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "reporterRole": {
+          "type": "string",
+          "enum": ["pais", "escola", "aluno", "anonimo"]
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["inappropriate_content", "minor_privacy", "bullying_harassment", "spam_advertising", "misinformation", "other"]
+        },
+        "reasonDetails": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "under_review", "resolved_removed", "resolved_warned", "dismissed"]
+        },
+        "reviewedAt": {
+          "type": "number"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "moderatorNotes": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "actionTaken": {
+          "type": "string",
+          "enum": ["removed", "warned", "removed_and_warned", "dismissed", "none"]
+        }
+      },
+      "required": ["contentType", "contentId", "contentSnippet", "reporterUserId", "reason", "timestamp", "status"]
+    },
+    "UserWarning": {
+      "title": "UserWarning",
+      "description": "Formal institutional warnings issued to users following moderation reviews",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "userName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "userRole": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["leve", "moderada", "grave"]
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "issuedBy": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "issuedAt": {
+          "type": "number"
+        },
+        "acknowledged": {
+          "type": "boolean"
+        },
+        "acknowledgedAt": {
+          "type": "number"
+        },
+        "relatedReportId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "relatedContentSnippet": {
+          "type": "string",
+          "maxLength": 500
+        }
+      },
+      "required": ["userId", "userName", "reason", "severity", "message", "issuedBy", "issuedAt", "acknowledged"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Isolated profiles containing individual user preferences and saved items"
+    },
+    "/system/{systemId}": {
+      "schema": "SystemHeartbeat",
+      "description": "Public read-only heartbeat documents for client availability checks"
+    },
+    "/offline_sync_logs/{logId}": {
+      "schema": "OfflineSyncLog",
+      "description": "A write-only append ledger tracking client actions synchronized with the cloud"
+    },
+    "/moderation_reports/{reportId}": {
+      "schema": "ContentReport",
+      "description": "Reports queue submitted by users and managed by school staff"
+    },
+    "/user_warnings/{warningId}": {
+      "schema": "UserWarning",
+      "description": "Institutional warnings issued to users for policy violations"
+    }
+  }
+}
