@@ -1257,15 +1257,24 @@ export default function AuthSection({
         </div>
       )}
 
-      {/* Brand Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-block">
+      {/* Brand Header with Editorial Typography matching Landing Page */}
+      <div className="text-center space-y-2.5 pb-1">
+        <div className="inline-flex items-center justify-center">
           <MagicLearningBrandLogo 
             schoolName={schoolName}
             primaryColor={branding.primaryColor}
             logoPreset={branding.logoPreset}
             size="md"
+            showText={false}
           />
+        </div>
+        <div>
+          <h2 className="font-serif font-black text-2xl sm:text-3xl text-slate-950 dark:text-white tracking-tight leading-tight">
+            {schoolName}
+          </h2>
+          <p className="text-xs text-slate-700 dark:text-slate-300 font-sans mt-1 font-semibold">
+            {loginGate === "pais" ? "Portal Integrado da Família & Alunos" : "Painel de Gestão & Coordenação Escolar"}
+          </p>
         </div>
       </div>
 

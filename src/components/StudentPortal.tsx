@@ -425,8 +425,8 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
-                  {locale === "en" ? "Hello, " : "Olá, "}{estudante.name.split(" ")[0]}
+                <h1 className="font-serif text-xl sm:text-2xl font-black text-slate-950 dark:text-white tracking-tight">
+                  {locale === "en" ? "Hello, " : "Olá, "}{estudante.name.split(" ")[0]}!
                 </h1>
                 <span className="text-[11px] font-mono font-bold text-amber-800 dark:text-amber-300 bg-amber-500/10 border border-amber-400/30 px-2 py-0.5 rounded-md">
                   {estudante.grade}

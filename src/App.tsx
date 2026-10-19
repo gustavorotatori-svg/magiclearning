@@ -36,6 +36,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   ChevronRight,
+  ChevronDown,
   Info,
   Sliders,
   Maximize2,
@@ -2208,6 +2209,7 @@ export function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activePushBanner, setActivePushBanner] = useState<NotificationItem | null>(null);
   const [bellOpen, setBellOpen] = useState(false);
+  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const [dicasFinanceirasOpen, setDicasFinanceirasOpen] = useState(false);
   const [shakeBell, setShakeBell] = useState(false);
   const [crmQuickRemindersModalOpen, setCrmQuickRemindersModalOpen] = useState(false);
@@ -7142,17 +7144,26 @@ export function App() {
               </button>
 
               <div 
-                className="flex items-center select-none cursor-pointer" 
+                className="flex items-center gap-2.5 select-none cursor-pointer" 
                 onClick={() => changeUserRoleWithMagic("landing")}
                 title="Ir para a página institucional"
               >
                 <MagicLearningBrandLogo
-                  size="xs"
+                  size="sm"
+                  showText={false}
                   schoolName={branding.schoolName}
                   primaryColor={branding.primaryColor}
                   secondaryColor={branding.secondaryColor}
                   logoPreset={branding.logoPreset}
                 />
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="font-serif font-bold text-sm tracking-tight text-slate-900 dark:text-white leading-tight">
+                    {branding.schoolName}
+                  </span>
+                  <span className="text-[10px] text-slate-700 dark:text-slate-300 font-mono tracking-wider uppercase font-semibold">
+                    {userRole === "pais" ? "Portal da Família" : userRole === "aluno" ? "Portal do Estudante" : "Diretoria Executiva"}
+                  </span>
+                </div>
               </div>
 
               {/* Desktop Student Switcher (shown on lg+) */}
@@ -7253,61 +7264,108 @@ export function App() {
                 <span className="hidden sm:inline font-sans">Site da Escola</span>
               </button>
 
-              {/* White-Label Shortcut (Desktop for School Managers) */}
-              {userRole === "escola" && (
+              {/* Unified Institutional Resources & Tools Dropdown */}
+              <div className="relative">
                 <button
                   type="button"
-                  id="btn-open-whitelabel-modal"
-                  onClick={() => setIsWhiteLabelModalOpen(true)}
-                  className="hidden lg:flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 dark:bg-amber-500/20 px-2.5 py-1.5 rounded-xl border border-amber-500/40 text-xs font-bold text-amber-900 dark:text-amber-200 transition-colors cursor-pointer"
-                  title="Personalização"
+                  id="btn-navbar-tools-menu"
+                  onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
+                  title="Recursos e Ferramentas"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Visual</span>
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" />
+                  <span className="hidden sm:inline font-sans">Recursos</span>
+                  <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${toolsMenuOpen ? "rotate-180" : ""}`} />
                 </button>
-              )}
 
-              {/* Relatório Financeiro PDF Shortcut */}
-              <button
-                type="button"
-                id="btn-navbar-monthly-pdf"
-                onClick={() => {
-                  setActiveModalFocus("financial_report");
-                  setIsMonthlyReportModalOpen(true);
-                }}
-                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 hover:bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold text-xs transition-colors cursor-pointer shrink-0"
-                title="Relatório PDF"
-              >
-                <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="hidden sm:inline font-sans">PDF</span>
-              </button>
+                <AnimatePresence>
+                  {toolsMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-64 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 space-y-1 text-left"
+                    >
+                      <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-600 dark:text-slate-400">
+                          Recursos & Módulos
+                        </span>
+                      </div>
 
-              {/* Text Adventure Game (RPG com Sistema de Vida) Shortcut */}
-              <button
-                type="button"
-                id="btn-navbar-text-adventure"
-                onClick={() => setIsTextAdventureModalOpen(true)}
-                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold text-xs transition-colors cursor-pointer shrink-0"
-                title="Aventura RPG"
-              >
-                <Compass className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="hidden sm:inline font-sans">RPG</span>
-              </button>
+                      {userRole === "escola" && (
+                        <button
+                          type="button"
+                          id="btn-open-whitelabel-modal"
+                          onClick={() => {
+                            setIsWhiteLabelModalOpen(true);
+                            setToolsMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                        >
+                          <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                          <div>
+                            <span className="block font-bold">Personalização White-Label</span>
+                            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-normal">Identidade, cores e brasão</span>
+                          </div>
+                        </button>
+                      )}
 
-              {/* LTV & CRM Thresholds Shortcut */}
-              <button
-                type="button"
-                id="btn-navbar-ltv-config"
-                onClick={() => {
-                  setActiveModalFocus("ltv_config");
-                  setIsRetentionMasteryConfigOpen(true);
-                }}
-                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/70 hover:bg-amber-100/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold text-xs transition-colors cursor-pointer"
-                title="Metas CRM"
-              >
-                <Award className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span className="font-sans">Metas</span>
-              </button>
+                      <button
+                        type="button"
+                        id="btn-navbar-monthly-pdf"
+                        onClick={() => {
+                          setActiveModalFocus("financial_report");
+                          setIsMonthlyReportModalOpen(true);
+                          setToolsMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                      >
+                        <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <div>
+                          <span className="block font-bold">Relatório Executivo PDF</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400 font-normal">Demonstrativo e conciliação</span>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        id="btn-navbar-text-adventure"
+                        onClick={() => {
+                          setIsTextAdventureModalOpen(true);
+                          setToolsMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                      >
+                        <Compass className="w-4 h-4 text-amber-500 shrink-0" />
+                        <div>
+                          <span className="block font-bold">Aventura Textual (RPG)</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400 font-normal">Gamificação pedagógica com HP</span>
+                        </div>
+                      </button>
+
+                      {userRole === "escola" && (
+                        <button
+                          type="button"
+                          id="btn-navbar-ltv-config"
+                          onClick={() => {
+                            setActiveModalFocus("ltv_config");
+                            setIsRetentionMasteryConfigOpen(true);
+                            setToolsMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                        >
+                          <Award className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                          <div>
+                            <span className="block font-bold">Metas CRM & Retenção LTV</span>
+                            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-normal">Régua de rematrículas</span>
+                          </div>
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Smart Recommendations Jump Button */}
               {(userRole === "pais" || userRole === "escola" || userRole === "aluno") && (

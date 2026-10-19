@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Kanban,
   Clock,
@@ -107,6 +108,8 @@ export const CrmKanbanBoard: React.FC<CrmKanbanBoardProps> = ({
   const [statsViewMode, setStatsViewMode] = useState<"base" | "funnel">("base");
   const [draggedStudentId, setDraggedStudentId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<ReEnrollmentStage | null>(null);
+  const [recentlyMovedStudentId, setRecentlyMovedStudentId] = useState<string | null>(null);
+  const [recentlyMovedStage, setRecentlyMovedStage] = useState<ReEnrollmentStage | null>(null);
 
   // Quick WhatsApp message modal state
   const [quickMsgStudent, setQuickMsgStudent] = useState<Estudante | null>(null);
@@ -267,6 +270,14 @@ export const CrmKanbanBoard: React.FC<CrmKanbanBoardProps> = ({
       }
 
       onUpdateStudentStage(studentId, newStage, currentStage);
+
+      // Trigger visual feedback: glowing border & scale animation on moved card
+      setRecentlyMovedStudentId(studentId);
+      setRecentlyMovedStage(newStage);
+      setTimeout(() => {
+        setRecentlyMovedStudentId((prev) => (prev === studentId ? null : prev));
+        setRecentlyMovedStage((prev) => (prev === newStage ? null : prev));
+      }, 2400);
 
       const stageLabels: Record<ReEnrollmentStage, string> = {
         pendente: "Pendente",
@@ -793,16 +804,20 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
           const Icon = column.icon;
 
           return (
-            <div
+            <motion.div
               key={column.id}
               onDragOver={(e) => handleDragOverColumn(e, column.id)}
               onDragLeave={(e) => handleDragLeaveColumn(e, column.id)}
               onDrop={(e) => handleDropOnColumn(e, column.id)}
-              className={`rounded-2xl border transition-all duration-150 flex flex-col min-h-[520px] ${
+              animate={{
+                scale: isOver ? 1.015 : 1
+              }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className={`rounded-2xl border transition-all duration-200 flex flex-col min-h-[520px] ${
                 column.borderColor
               } ${
                 isOver
-                  ? `${column.dropBg} ${column.hoverBorder} ring-2 ring-indigo-400/40 scale-[1.005]`
+                  ? `${column.dropBg} ${column.hoverBorder} ring-2 ring-indigo-400/50 shadow-md`
                   : isFocusedStage
                   ? "bg-white dark:bg-slate-900 ring-2 ring-indigo-500/80 dark:ring-indigo-400/80 shadow-xs"
                   : isDimmed
@@ -827,7 +842,7 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-sans block leading-tight">
+                    <span className="text-[10px] text-slate-700 dark:text-slate-300 font-sans block leading-tight font-medium">
                       {column.subtitle}
                     </span>
                   </div>
@@ -843,21 +858,37 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                 </div>
               </div>
 
-              {/* Cards Container */}
+              {/* Cards Container with Animated Drop Indicator */}
               <div className="p-3 space-y-3 flex-1 overflow-y-auto max-h-[680px]">
+                {/* Visual Drop Slot Indicator during drag over */}
+                <AnimatePresence>
+                  {isOver && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, height: "auto", scale: 1 }}
+                      exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className={`border-2 border-dashed ${column.hoverBorder} ${column.dropBg} rounded-xl p-3 flex items-center justify-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 shadow-inner`}
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-500 animate-spin" />
+                      <span>Solte o estudante para mover para {column.title}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {columnStudents.length === 0 ? (
                   <div
                     className={`h-36 rounded-xl border border-dashed flex flex-col items-center justify-center text-center p-4 transition-colors ${
                       isOver
-                        ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600"
-                        : "border-slate-300 dark:border-slate-800 text-slate-400"
+                        ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300"
+                        : "border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400"
                     }`}
                   >
-                    <Icon className="w-6 h-6 mb-1.5 opacity-60" />
-                    <span className="text-xs font-semibold">
+                    <Icon className="w-6 h-6 mb-1.5 opacity-70" />
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                       {isDimmed ? "Estágio com foco desativado" : "Nenhum estudante nesta etapa"}
                     </span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
                       {isDimmed ? (
                         <button
                           type="button"
@@ -874,18 +905,82 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                 ) : (
                   columnStudents.map((student) => {
                     const isBeingDragged = draggedStudentId === student.id;
+                    const isJustMoved = recentlyMovedStudentId === student.id;
+
+                    // Glow border & background effect depending on move status
+                    let cardBorderGlow = "border-slate-200 dark:border-slate-750 hover:border-slate-400 dark:hover:border-slate-600";
+                    if (isJustMoved) {
+                      if (recentlyMovedStage === "concluido") {
+                        cardBorderGlow = "ring-2 ring-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/25 bg-emerald-50/30 dark:bg-emerald-950/30";
+                      } else if (recentlyMovedStage === "em_analise") {
+                        cardBorderGlow = "ring-2 ring-blue-500 border-blue-500 shadow-lg shadow-blue-500/25 bg-blue-50/30 dark:bg-blue-950/30";
+                      } else {
+                        cardBorderGlow = "ring-2 ring-amber-500 border-amber-500 shadow-lg shadow-amber-500/25 bg-amber-50/30 dark:bg-amber-950/30";
+                      }
+                    } else if (isBeingDragged) {
+                      cardBorderGlow = "border-dashed border-indigo-500 ring-2 ring-indigo-400/60 shadow-xl shadow-indigo-500/25 opacity-60";
+                    }
 
                     return (
-                      <div
+                      <motion.div
+                        layout="position"
                         key={student.id}
                         id={`kanban-card-${student.id}`}
                         draggable={true}
                         onDragStart={(e) => handleDragStart(e, student.id)}
                         onDragEnd={handleDragEnd}
-                        className={`group bg-white dark:bg-slate-850 rounded-xl p-3.5 border border-slate-200 dark:border-slate-750 shadow-2xs hover:shadow-sm hover:border-slate-350 dark:hover:border-slate-650 transition-all cursor-grab active:cursor-grabbing relative select-none ${
-                          isBeingDragged ? "opacity-40 scale-95 border-dashed border-indigo-400" : ""
-                        }`}
+                        whileHover={
+                          !isBeingDragged
+                            ? {
+                                y: -3,
+                                scale: 1.018,
+                                transition: { type: "spring", stiffness: 400, damping: 22 }
+                              }
+                            : {}
+                        }
+                        whileTap={{ scale: 0.97 }}
+                        animate={
+                          isJustMoved
+                            ? {
+                                scale: [1, 1.045, 1],
+                                transition: { type: "spring", stiffness: 450, damping: 16 }
+                              }
+                            : isBeingDragged
+                            ? {
+                                scale: 0.95,
+                                rotate: -1,
+                                transition: { duration: 0.15 }
+                              }
+                            : {
+                                scale: 1,
+                                rotate: 0,
+                                transition: { type: "spring", stiffness: 350, damping: 25 }
+                              }
+                        }
+                        className={`group bg-white dark:bg-slate-850 rounded-xl p-3.5 border shadow-2xs hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing relative select-none ${cardBorderGlow}`}
                       >
+                        {/* Status Updated Floating Pill */}
+                        <AnimatePresence>
+                          {isJustMoved && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -8, scale: 0.85 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -4, scale: 0.85 }}
+                              transition={{ duration: 0.2 }}
+                              className={`absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold font-mono shadow-xs flex items-center gap-1 z-10 ${
+                                recentlyMovedStage === "concluido"
+                                  ? "bg-emerald-600 text-white"
+                                  : recentlyMovedStage === "em_analise"
+                                  ? "bg-blue-600 text-white"
+                                  : "bg-amber-500 text-slate-950"
+                              }`}
+                            >
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              <span>Etapa Atualizada</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
                         {/* Drag Handle & Top Row */}
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -902,31 +997,31 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                               />
                             </div>
                             <div className="min-w-0">
-                              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate font-sans">
+                              <h4 className="text-xs font-bold text-slate-950 dark:text-white truncate font-sans">
                                 {student.name}
                               </h4>
-                              <span className="text-[10px] text-slate-500 font-sans block truncate">
+                              <span className="text-[10px] text-slate-700 dark:text-slate-300 font-sans block truncate font-medium">
                                 {student.grade}
                               </span>
                             </div>
                           </div>
 
-                          <div className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400 transition-colors shrink-0">
+                          <div className="text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0">
                             <GripVertical className="w-4 h-4" />
                           </div>
                         </div>
 
                         {/* Responsible and Contact metadata */}
-                        <div className="text-[11px] text-slate-600 dark:text-slate-400 space-y-0.5 border-t border-slate-100 dark:border-slate-800 pt-2 mb-2.5 font-sans">
+                        <div className="text-[11px] text-slate-700 dark:text-slate-300 space-y-0.5 border-t border-slate-100 dark:border-slate-800 pt-2 mb-2.5 font-sans">
                           <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-slate-400">Responsável:</span>
-                            <strong className="text-slate-700 dark:text-slate-300 truncate max-w-[130px]">
+                            <span className="text-slate-600 dark:text-slate-400 font-medium">Responsável:</span>
+                            <strong className="text-slate-900 dark:text-slate-100 truncate max-w-[130px] font-bold">
                               {student.parentName || "Não cadastrado"}
                             </strong>
                           </div>
                           <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-slate-400">Contato:</span>
-                            <span className="font-mono text-slate-600 dark:text-slate-400">
+                            <span className="text-slate-600 dark:text-slate-400 font-medium">Contato:</span>
+                            <span className="font-mono text-slate-800 dark:text-slate-200 font-semibold">
                               {student.parentPhone || "(11) 98888-1234"}
                             </span>
                           </div>
@@ -941,7 +1036,7 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                               e.stopPropagation();
                               handleOpenQuickMessage(student);
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-2 py-1 rounded-md transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-2 py-1 rounded-md transition-colors cursor-pointer border border-emerald-200/60 dark:border-emerald-800/60"
                             title="Disparar mensagem no WhatsApp do responsável"
                           >
                             <Smartphone className="w-3 h-3 text-emerald-600" />
@@ -959,7 +1054,7 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                                     column.id === "concluido" ? "em_analise" : "pendente";
                                   handleMoveStage(student.id, prevStage);
                                 }}
-                                className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="p-1 rounded text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                 title="Mover para a etapa anterior"
                               >
                                 <ArrowLeft className="w-3 h-3" />
@@ -975,7 +1070,7 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                                     column.id === "pendente" ? "em_analise" : "concluido";
                                   handleMoveStage(student.id, nextStage);
                                 }}
-                                className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="p-1 rounded text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                 title="Avançar para a próxima etapa"
                               >
                                 <ArrowRight className="w-3 h-3" />
@@ -983,12 +1078,12 @@ Taxa Global de Rematrícula: ${conversionStats.overallConversion.toFixed(1)}% (M
                             )}
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

@@ -102,19 +102,19 @@ footer a:hover {
   color: #e2e8f0;
 }
 
-/* Prevent ultra-washed out text in light mode and dark mode */
+/* Prevent ultra-washed out text in light mode and dark mode (WCAG AAA Compliance) */
 .text-slate-400 {
-  color: #64748b;
+  color: #1e293b;
 }
 :where(.dark) .text-slate-400 {
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 .text-slate-500 {
-  color: #475569;
+  color: #0f172a;
 }
 :where(.dark) .text-slate-500 {
-  color: #94a3b8;
+  color: #f1f5f9;
 }
 
 :root {

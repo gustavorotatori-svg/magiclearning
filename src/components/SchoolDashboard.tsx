@@ -55,6 +55,7 @@ import { RecommendationEngineWidget } from "./RecommendationEngineWidget";
 import { MonthlyFinancialReportModal } from "./MonthlyFinancialReportModal";
 import { ErpMonthlyDelinquencyChart } from "./ErpMonthlyDelinquencyChart";
 import { trackUserActivity } from "../services/recommendationEngine";
+import schoolClassroomActivity from "../assets/images/school_classroom_activity_1791766404581.jpg";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -581,24 +582,26 @@ export const SchoolDashboard = memo(function SchoolDashboard({
       )}
 
       {/* ========================================================================= */}
-      {/* 1. EXECUTIVE HEADER & CONTROL BAR */}
+      {/* 1. EXECUTIVE HEADER & EDITORIAL CAMPUS BANNER */}
       {/* ========================================================================= */}
-      <header className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs">
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5">
-          <div className="space-y-1.5">
+      <header className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 relative z-10">
+          
+          {/* Left Column: School Executive Identity & Status */}
+          <div className="space-y-2 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 py-1 rounded">
                 Painel do Gestor Escolar
               </span>
               <button
                 type="button"
                 onClick={() => onNavigateToTab("erp")}
                 title="Acessar Central de Integração ERP & Webhooks"
-                className="text-[10px] font-mono text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 hover:border-indigo-300 px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="text-[10px] font-mono text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${erpSyncStatus === "connected" ? "bg-emerald-500" : "bg-amber-500"}`} />
                 <span>ERP: {erpSyncStatus === "connected" ? "Conciliado" : "Pendente"} ({erpLastSyncTime})</span>
-                <span className="text-[9px] text-slate-400 font-sans">↗</span>
+                <span className="text-[9px] text-slate-500 font-sans">↗</span>
               </button>
 
               <button
@@ -607,51 +610,79 @@ export const SchoolDashboard = memo(function SchoolDashboard({
                 title="Acessar Central de Moderação de Conteúdo"
                 className={`text-[10px] font-mono px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors cursor-pointer ${
                   pendingReportsCount > 0
-                    ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 hover:bg-amber-100"
-                    : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800 hover:border-amber-300"
+                    ? "bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 hover:bg-amber-100"
+                    : "bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-amber-300"
                 }`}
               >
-                <ShieldAlert className={`w-3.5 h-3.5 ${pendingReportsCount > 0 ? "text-amber-600 dark:text-amber-400 animate-pulse" : "text-slate-400"}`} />
+                <ShieldAlert className={`w-3.5 h-3.5 ${pendingReportsCount > 0 ? "text-amber-600 dark:text-amber-400 animate-pulse" : "text-slate-500"}`} />
                 <span>Moderação: {pendingReportsCount > 0 ? `${pendingReportsCount} pendente(s)` : "Em dia"}</span>
-                <span className="text-[9px] text-slate-400 font-sans">↗</span>
+                <span className="text-[9px] text-slate-500 font-sans">↗</span>
               </button>
             </div>
-            <h1 className="text-xl sm:text-2xl font-serif font-black text-slate-900 dark:text-slate-50 tracking-tight">
-              {schoolName} • <span className="font-sans text-lg font-semibold text-slate-500 dark:text-slate-400">Diretoria Executiva</span>
+
+            <h1 className="text-2xl sm:text-3xl font-serif font-black text-slate-950 dark:text-white tracking-tight leading-tight">
+              {schoolName} <span className="font-sans text-base sm:text-lg font-bold text-slate-600 dark:text-slate-300">· Diretoria Executiva</span>
             </h1>
-            <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+
+            <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-sans max-w-2xl leading-relaxed">
+              Gestão estratégica, governança acadêmica e indicadores operacionais em tempo real.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-slate-700 dark:text-slate-300 font-medium">
+              <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 450 Alunos Ativos
               </span>
-              <span>•</span>
+              <span>·</span>
               <span>Exercício 2026</span>
-              <span>•</span>
-              <span className="text-indigo-600 dark:text-indigo-400 font-medium">94.8% Ocupação</span>
+              <span>·</span>
+              <span className="text-indigo-700 dark:text-indigo-300 font-bold">94.8% Ocupação de Vagas</span>
+            </div>
+
+            {/* Quick Global Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <button
+                id="btn-sync-erp-executive"
+                onClick={handleSyncERP}
+                disabled={isSyncing}
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isSyncing ? "animate-spin" : ""}`} />
+                <span>{isSyncing ? "Conciliando..." : "Sincronizar ERP"}</span>
+              </button>
+
+              <button
+                id="btn-export-bulk-reports"
+                onClick={handleTriggerBulkExport}
+                disabled={isBulkExporting || estudantes.length === 0}
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{isBulkExporting ? `Exportando (${bulkExportProgress.current}/${bulkExportProgress.total})` : "Exportar Relatórios"}</span>
+              </button>
             </div>
           </div>
 
-          {/* Quick Global Action Buttons */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0">
-            <button
-              id="btn-sync-erp-executive"
-              onClick={handleSyncERP}
-              disabled={isSyncing}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isSyncing ? "animate-spin" : ""}`} />
-              <span>{isSyncing ? "Conciliando..." : "Sincronizar ERP"}</span>
-            </button>
-
-            <button
-              id="btn-export-bulk-reports"
-              onClick={handleTriggerBulkExport}
-              disabled={isBulkExporting || estudantes.length === 0}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>{isBulkExporting ? `Exportando (${bulkExportProgress.current}/${bulkExportProgress.total})` : "Exportar Relatórios"}</span>
-            </button>
+          {/* Right Column: Authentic Campus Photographic Card linking with Landing */}
+          <div className="hidden xl:block w-72 h-36 rounded-2xl overflow-hidden relative border border-slate-200 dark:border-slate-800 shadow-md shrink-0 group">
+            <img
+              src={schoolClassroomActivity}
+              alt="Atividade Pedagógica"
+              className="w-full h-full object-cover object-center transform transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent pointer-events-none" />
+            <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-950/70 backdrop-blur-xs text-[10px] font-mono font-bold text-white border border-white/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Campus Ativo</span>
+            </div>
+            <div className="absolute bottom-2.5 left-2.5 right-2.5">
+              <span className="text-[11px] font-bold text-white block leading-tight truncate">
+                Rotina & Aprendizado Contínuo
+              </span>
+              <span className="text-[10px] text-slate-300 font-mono block">
+                Portaria Síncrona & Aulas em Curso
+              </span>
+            </div>
           </div>
         </div>
 
