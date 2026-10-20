@@ -81,6 +81,7 @@ interface UserProfilePageProps {
   onSelectThemePreference?: (pref: ThemePreference) => void;
   locale?: SupportedLocale;
   onLocaleChanged?: (loc: SupportedLocale) => void;
+  onOpenPushPreferences?: () => void;
 }
 
 const AVATAR_PRESETS = [
@@ -292,6 +293,10 @@ export default function UserProfilePage({
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(userProfile?.preferences?.notifyWhatsApp ?? true);
   const [notifyEmailDaily, setNotifyEmailDaily] = useState(userProfile?.preferences?.notifyEmailDaily ?? true);
   const [notifySmsEmergency, setNotifySmsEmergency] = useState(userProfile?.preferences?.notifySmsEmergency ?? false);
+  const [notifyNewMessages, setNotifyNewMessages] = useState(userProfile?.preferences?.notifyNewMessages ?? true);
+  const [notifyDeadlines, setNotifyDeadlines] = useState(userProfile?.preferences?.notifyDeadlines ?? true);
+  const [notifyPromotions, setNotifyPromotions] = useState(userProfile?.preferences?.notifyPromotions ?? true);
+  const [notifyPushBrowser, setNotifyPushBrowser] = useState(userProfile?.preferences?.notifyPushBrowser ?? true);
 
   // Security & App Settings
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(userProfile?.preferences?.twoFactorEnabled ?? false);
@@ -575,6 +580,10 @@ export default function UserProfilePage({
         notifyWhatsApp,
         notifyEmailDaily,
         notifySmsEmergency,
+        notifyNewMessages,
+        notifyDeadlines,
+        notifyPromotions,
+        notifyPushBrowser,
         twoFactorEnabled,
         quietHoursEnabled,
         quietHoursStart,
@@ -1837,6 +1846,84 @@ export default function UserProfilePage({
                     }`} />
                   </button>
                 </div>
+
+                {/* KEY EVENT 1: New Messages */}
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-900 dark:text-white">Novas Mensagens & Recados</h5>
+                      <p className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                        Avisos de professores, coordenação pedagógica e secretaria.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNotifyNewMessages(!notifyNewMessages)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                      notifyNewMessages ? "bg-amber-600" : "bg-slate-300 dark:bg-slate-800"
+                    }`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
+                      notifyNewMessages ? "translate-x-5" : "translate-x-0"
+                    }`} />
+                  </button>
+                </div>
+
+                {/* KEY EVENT 2: Upcoming Deadlines */}
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-900 dark:text-white">Prazos & Vencimentos</h5>
+                      <p className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                        Vencimento de faturas, rematrícula e prazos de trabalhos acadêmicos.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNotifyDeadlines(!notifyDeadlines)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                      notifyDeadlines ? "bg-amber-600" : "bg-slate-300 dark:bg-slate-800"
+                    }`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
+                      notifyDeadlines ? "translate-x-5" : "translate-x-0"
+                    }`} />
+                  </button>
+                </div>
+
+                {/* KEY EVENT 3: Special Promotions */}
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
+                      <Tag className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-900 dark:text-white">Promoções & Oportunidades</h5>
+                      <p className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                        Desconto de pontualidade, rematrícula antecipada e cursos de férias.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNotifyPromotions(!notifyPromotions)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                      notifyPromotions ? "bg-amber-600" : "bg-slate-300 dark:bg-slate-800"
+                    }`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ${
+                      notifyPromotions ? "translate-x-5" : "translate-x-0"
+                    }`} />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1847,7 +1934,17 @@ export default function UserProfilePage({
                 Canais de Entrega Ativos
               </h4>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Push no Navegador</span>
+                  <input
+                    type="checkbox"
+                    checked={notifyPushBrowser}
+                    onChange={(e) => setNotifyPushBrowser(e.target.checked)}
+                    className="w-4 h-4 text-amber-600 rounded cursor-pointer"
+                  />
+                </div>
+
                 <div className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200">WhatsApp Proativo</span>
                   <input
@@ -1878,6 +1975,19 @@ export default function UserProfilePage({
                   />
                 </div>
               </div>
+
+              {onOpenPushPreferences && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={onOpenPushPreferences}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-amber-300 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/30 hover:bg-amber-100/60 text-amber-800 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <span>Abrir Central Completa de Notificações Push & Testes</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Interface Theme & Appearance */}

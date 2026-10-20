@@ -173,6 +173,13 @@ export interface UserPreferences {
   highContrast?: boolean;
   reducedMotion?: boolean;
   emailDigest?: string;
+  // Push Notification & Key Events Preferences
+  notifyPushBrowser?: boolean;
+  notifyNewMessages?: boolean;
+  notifyDeadlines?: boolean;
+  notifyPromotions?: boolean;
+  notifySoundEnabled?: boolean;
+  notifyVibrationEnabled?: boolean;
 }
 
 export interface UserProfile {
@@ -200,8 +207,12 @@ export interface NotificationItem {
   timestamp: number;
   read: boolean;
   targetTab: "comunicados" | "diaadia" | "academico" | "cobrancas" | "acesso";
-  iconType: "announcement" | "occurrence" | "chat" | "calendar" | "faturamento";
+  iconType: "announcement" | "occurrence" | "chat" | "calendar" | "faturamento" | "message" | "deadline" | "promotion";
+  category?: "message" | "deadline" | "promotion" | "system" | "financial" | "academic" | "access";
   studentName?: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  priority?: "low" | "normal" | "high" | "urgent";
   nextCrmContactDate?: string;
   nextCrmContactTime?: string;
   nextCrmContactNote?: string;

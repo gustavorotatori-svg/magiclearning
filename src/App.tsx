@@ -183,6 +183,9 @@ import {
 } from "./utils/i18n";
 import { ThemeSelector } from "./components/ThemeSelector";
 import { LanguageSelector } from "./components/LanguageSelector";
+import { pushNotificationService, NotificationEventCategory } from "./services/pushNotificationService";
+import { NotificationPreferencesModal } from "./components/NotificationPreferencesModal";
+import { PushNotificationToast } from "./components/PushNotificationToast";
 
 // Static Seed Data for Photos and Notifications
 const initialNotificationsSeed: NotificationItem[] = [
@@ -2209,6 +2212,8 @@ export function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activePushBanner, setActivePushBanner] = useState<NotificationItem | null>(null);
   const [bellOpen, setBellOpen] = useState(false);
+  const [isPushPreferencesOpen, setIsPushPreferencesOpen] = useState(false);
+  const [notifDropdownCategory, setNotifDropdownCategory] = useState<"todos" | "mensagens" | "prazos" | "promocoes" | "financeiro">("todos");
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const [dicasFinanceirasOpen, setDicasFinanceirasOpen] = useState(false);
   const [shakeBell, setShakeBell] = useState(false);
@@ -2687,43 +2692,27 @@ export function App() {
   const cropImageRef = useRef<HTMLImageElement>(null);
   const cropContainerRef = useRef<HTMLDivElement>(null);
 
-  // Trigger simulated push notification helper
+  // Trigger push notification helper via PushNotificationService
   const triggerPushNotification = (info: Omit<NotificationItem, "id" | "timestamp" | "read">) => {
-    const newNotif: NotificationItem = {
-      id: "notif-" + Date.now(),
+    let category: NotificationEventCategory = "new_message";
+    if (info.iconType === "faturamento") category = "financial";
+    else if (info.iconType === "occurrence") category = "security";
+    else if (info.iconType === "deadline") category = "deadline";
+    else if (info.iconType === "promotion") category = "promotion";
+    else if (info.iconType === "chat" || info.iconType === "message") category = "new_message";
+    else if (info.category) category = info.category as any;
+
+    pushNotificationService.sendNotification({
       title: info.title,
       body: info.body,
-      timestamp: Date.now(),
-      read: false,
+      category,
       targetTab: info.targetTab,
       iconType: info.iconType,
-      studentName: info.studentName
-    };
-    
-    setNotifications((prev) => {
-      const updated = [newNotif, ...prev];
-      localStorage.setItem("school_push_notifications", JSON.stringify(updated));
-      return updated;
+      studentName: info.studentName,
+      priority: info.priority || "normal",
+      actionLabel: info.actionLabel,
+      actionUrl: info.actionUrl,
     });
-
-    // Trigger bell shake animation
-    setShakeBell(true);
-    setTimeout(() => {
-      setShakeBell(false);
-    }, 1200);
-
-    // Animate OS-style floating push banner
-    setActivePushBanner(newNotif);
-
-    // Auto-close banner after 6 seconds
-    setTimeout(() => {
-      setActivePushBanner((prev) => {
-        if (prev?.id === newNotif.id) {
-          return null;
-        }
-        return prev;
-      });
-    }, 6000);
   };
 
   // Pipeline stage change & push alert dispatcher for School CRM
@@ -4039,6 +4028,48 @@ export function App() {
     const localAnns = localStorage.getItem("school_chart_annotations");
     setChartAnnotations(localAnns ? JSON.parse(localAnns) : initialAnnotationsSeed);
   }, []);
+
+  // Push Notification Service sync and listeners
+  useEffect(() => {
+    if (userProfile?.preferences) {
+      pushNotificationService.syncFromUserProfile(userProfile.preferences);
+    }
+  }, [userProfile?.preferences]);
+
+  useEffect(() => {
+    const unsubNotif = pushNotificationService.subscribe((newItem) => {
+      setNotifications((prev) => [newItem, ...prev.filter((n) => n.id !== newItem.id)]);
+      setShakeBell(true);
+      setTimeout(() => setShakeBell(false), 1200);
+    });
+
+    const unsubBanner = pushNotificationService.subscribeBanner((bannerItem) => {
+      setActivePushBanner(bannerItem);
+    });
+
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      const handleSwMessage = (event: MessageEvent) => {
+        if (event.data?.type === "NAVIGATE_TO_TAB" && event.data.tab) {
+          if (userRole === "pais") {
+            setActiveTab(event.data.tab);
+          } else if (userRole === "escola") {
+            setSchoolActiveTab(event.data.tab === "comunicados" ? "comunicados" : "dashboard");
+          }
+        }
+      };
+      navigator.serviceWorker.addEventListener("message", handleSwMessage);
+      return () => {
+        unsubNotif();
+        unsubBanner();
+        navigator.serviceWorker.removeEventListener("message", handleSwMessage);
+      };
+    }
+
+    return () => {
+      unsubNotif();
+      unsubBanner();
+    };
+  }, [userRole]);
 
   // Persist gamification progress to localStorage when modified
   useEffect(() => {
@@ -7440,66 +7471,167 @@ export function App() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.96 }}
                       transition={{ duration: 0.15 }}
-                      className="fixed inset-x-3 top-14 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-88 max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden z-50 text-left"
+                      className="fixed inset-x-3 top-14 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden z-50 text-left"
                     >
-                      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                      {/* Top Header */}
+                      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-950/60">
                         <div>
-                          <h3 className="font-sans font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
-                            Notificações
-                          </h3>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-sans font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
+                              Central de Notificações
+                            </h3>
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Push Service Conectado" />
+                          </div>
                           <p className="text-[10px] text-slate-500 font-mono">
                             {notifications.filter(n => !n.read).length} não lidas
                           </p>
                         </div>
-                        {notifications.length > 0 && (
-                          <div className="flex gap-2 items-center text-[10px]">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNotifications(prev => {
-                                  const updated = prev.map(n => ({ ...n, read: true }));
-                                  localStorage.setItem("school_push_notifications", JSON.stringify(updated));
-                                  return updated;
-                                });
-                                setToast({ message: "Notificações marcadas como lidas!", type: "success" });
-                              }}
-                              className="font-bold text-amber-700 hover:text-amber-800 dark:text-amber-400 cursor-pointer"
-                            >
-                              Marcar lidas
-                            </button>
-                            <span className="text-slate-300 dark:text-slate-700">|</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNotifications([]);
-                                localStorage.setItem("school_push_notifications", JSON.stringify([]));
-                                setToast({ message: "Histórico de notificações limpo!", type: "success" });
-                              }}
-                              className="font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 cursor-pointer"
-                            >
-                              Limpar
-                            </button>
-                          </div>
-                        )}
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsPushPreferencesOpen(true);
+                              setBellOpen(false);
+                            }}
+                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                            title="Personalizar Preferências de Notificação"
+                            aria-label="Preferências"
+                          >
+                            <Settings className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                          </button>
+
+                          {notifications.length > 0 && (
+                            <div className="flex gap-1.5 items-center text-[10px]">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNotifications(prev => {
+                                    const updated = prev.map(n => ({ ...n, read: true }));
+                                    localStorage.setItem("school_push_notifications", JSON.stringify(updated));
+                                    return updated;
+                                  });
+                                  setToast({ message: "Notificações marcadas como lidas!", type: "success" });
+                                }}
+                                className="font-bold text-amber-700 hover:text-amber-800 dark:text-amber-400 cursor-pointer"
+                              >
+                                Lidas
+                              </button>
+                              <span className="text-slate-300 dark:text-slate-700">|</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNotifications([]);
+                                  localStorage.setItem("school_push_notifications", JSON.stringify([]));
+                                  setToast({ message: "Histórico de notificações limpo!", type: "success" });
+                                }}
+                                className="font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 cursor-pointer"
+                              >
+                                Limpar
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
+                      {/* Quick Event Simulation Bar */}
+                      <div className="px-3 py-2 bg-amber-50/50 dark:bg-amber-950/20 border-b border-amber-200/50 dark:border-amber-900/30 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+                        <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 shrink-0">
+                          Disparo:
+                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => pushNotificationService.triggerNewMessage()}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                            title="Simular Nova Mensagem"
+                          >
+                            💬 Mensagem
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => pushNotificationService.triggerUpcomingDeadline()}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                            title="Simular Prazo de Fatura / Trabalho"
+                          >
+                            ⏳ Prazo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => pushNotificationService.triggerSpecialPromotion()}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
+                            title="Simular Promoção Especial"
+                          >
+                            🎁 Promoção
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Category Filter Chips */}
+                      <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900 flex items-center gap-1 overflow-x-auto no-scrollbar">
+                        {[
+                          { id: "todos", label: "Todos" },
+                          { id: "mensagens", label: "Mensagens" },
+                          { id: "prazos", label: "Prazos" },
+                          { id: "promocoes", label: "Promoções" },
+                          { id: "financeiro", label: "Finanças" },
+                        ].map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setNotifDropdownCategory(cat.id as any)}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                              notifDropdownCategory === cat.id
+                                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                            }`}
+                          >
+                            {cat.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Notification Items List */}
                       <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                        {notifications.length === 0 ? (
-                          <div className="px-4 py-8 text-center text-slate-400">
-                            <BellOff className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
-                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Sem notificações</p>
-                            <p className="text-[10px] text-slate-500 mt-0.5">Novos comunicados aparecerão aqui.</p>
-                          </div>
-                        ) : (
-                          notifications.map((notif) => (
+                        {(() => {
+                          const filtered = notifications.filter((notif) => {
+                            if (notifDropdownCategory === "todos") return true;
+                            if (notifDropdownCategory === "mensagens") return notif.category === "new_message" || notif.iconType === "chat" || notif.iconType === "message";
+                            if (notifDropdownCategory === "prazos") return notif.category === "deadline" || notif.iconType === "deadline";
+                            if (notifDropdownCategory === "promocoes") return notif.category === "promotion" || notif.iconType === "promotion";
+                            if (notifDropdownCategory === "financeiro") return notif.category === "financial" || notif.iconType === "faturamento";
+                            return true;
+                          });
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="px-4 py-8 text-center text-slate-400">
+                                <BellOff className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Sem notificações nesta categoria</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">Clique em um dos botões de disparo acima para testar.</p>
+                              </div>
+                            );
+                          }
+
+                          return filtered.map((notif) => (
                             <div
                               key={notif.id}
                               onClick={() => handleNotificationClick(notif)}
                               className={`px-4 py-3 flex items-start gap-3 transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-850 ${
-                                !notif.read ? "bg-amber-50/20 dark:bg-amber-950/10" : ""
+                                !notif.read ? "bg-amber-50/25 dark:bg-amber-950/15" : ""
                               }`}
                             >
-                              <div className="p-1.5 rounded-lg bg-amber-100/60 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5">
+                              <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${
+                                notif.iconType === "message"
+                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                                  : notif.iconType === "deadline"
+                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+                                  : notif.iconType === "promotion"
+                                  ? "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
+                                  : notif.iconType === "faturamento"
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                                  : "bg-amber-100/60 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                              }`}>
                                 <Bell className="w-3.5 h-3.5" />
                               </div>
                               <div className="min-w-0 flex-1 space-y-0.5">
@@ -7516,11 +7648,23 @@ export function App() {
                                 </p>
                               </div>
                             </div>
-                          ))
-                        )}
+                          ));
+                        })()}
                       </div>
 
-                      <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-center">
+                      {/* Footer Actions */}
+                      <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between gap-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsPushPreferencesOpen(true);
+                            setBellOpen(false);
+                          }}
+                          className="text-[10px] font-bold text-amber-700 hover:text-amber-800 dark:text-amber-400 py-1 px-2 cursor-pointer flex items-center gap-1"
+                        >
+                          <Settings className="w-3 h-3" />
+                          <span>Preferências Push</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -7531,9 +7675,9 @@ export function App() {
                               setActiveTab("comunicados");
                             }
                           }}
-                          className="text-[10px] font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white w-full py-1 cursor-pointer"
+                          className="text-[10px] font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white py-1 px-2 cursor-pointer"
                         >
-                          Ver todos os comunicados →
+                          Ver todos comunicados →
                         </button>
                       </div>
                     </motion.div>
@@ -8367,6 +8511,7 @@ export function App() {
                       locale={locale}
                       onLocaleChanged={handleSetLocale}
                       onUpdateStudentPhoto={handleUpdateStudentPhoto}
+                      onOpenPushPreferences={() => setIsPushPreferencesOpen(true)}
                     />
                   )}
                 </motion.div>
