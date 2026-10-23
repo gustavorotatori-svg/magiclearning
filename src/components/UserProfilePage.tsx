@@ -12,6 +12,9 @@ import {
   ShieldCheck,
   Lock,
   Bell,
+  BellRing,
+  MessageSquare,
+  Tag,
   Moon,
   Sun,
   Palette,
@@ -272,6 +275,7 @@ export default function UserProfilePage({
   onSelectThemePreference,
   locale = "pt",
   onLocaleChanged,
+  onOpenPushPreferences,
 }: UserProfilePageProps) {
   // Local state for taking student photo via camera
   const [studentForCamera, setStudentForCamera] = useState<Estudante | null>(null);

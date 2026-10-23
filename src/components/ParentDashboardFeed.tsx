@@ -10,25 +10,13 @@ import {
   FileText,
   GraduationCap,
   Heart,
-  Info,
   Moon,
   QrCode,
   ShieldCheck,
   Smile,
-  TrendingUp,
   CheckCircle,
-  Camera,
   Bell
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip
-} from "recharts";
 import { Estudante, Cobranca, Comunicado, Momento, Evento, SchoolBranding } from "../types";
 import { DEFAULT_FEED_MODULE_ORDER } from "../utils/whiteLabelDefaults";
 import { DailyGoalsSection } from "./DailyGoalsSection";
@@ -56,7 +44,7 @@ interface ParentDashboardFeedProps {
   latestAnnouncement?: Comunicado;
   comunicados?: Comunicado[];
   momentos?: Momento[];
-  CustomTooltip: React.ComponentType<any>;
+  CustomTooltip?: React.ComponentType<any>;
 }
 
 export const ParentDashboardFeed = memo(function ParentDashboardFeed({
@@ -64,16 +52,13 @@ export const ParentDashboardFeed = memo(function ParentDashboardFeed({
   branding,
   todayOccurrence,
   onNavigateToTab,
-  onOpenPediatraModal,
   moodTimeline,
   wellnessIndex,
   dominantLabel,
   pendingCobranca,
   eventos,
-  latestAnnouncement,
   comunicados = [],
-  momentos = [],
-  CustomTooltip
+  momentos = []
 }: ParentDashboardFeedProps) {
   const isModuleEnabled = (modId: string) => {
     if (!branding?.enabledModules) return true;
@@ -90,6 +75,7 @@ export const ParentDashboardFeed = memo(function ParentDashboardFeed({
 
     switch (moduleId) {
       case "metas":
+        // Only render if explicitly enabled in branding
         return (
           <div key="feed-metas" className="w-full">
             <DailyGoalsSection student={activeStudent} branding={branding} />
@@ -100,219 +86,147 @@ export const ParentDashboardFeed = memo(function ParentDashboardFeed({
         return (
           <div
             key="feed-diaadia"
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-6"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <Activity className="w-5 h-5 text-slate-800 dark:text-slate-200" />
-                <div>
-                  <h3 className="font-sans font-bold text-sm text-slate-950 dark:text-white">
-                    Resumo Diário da Rotina Escolar
-                  </h3>
-                  <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">Atualizado pela equipe pedagógica</p>
-                </div>
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/80">
+              <div>
+                <h2 className="font-serif font-black text-lg text-slate-950 dark:text-white tracking-tight">
+                  Rotina Escolar de Hoje
+                </h2>
+                <p className="text-xs text-slate-500 font-sans">
+                  Acompanhamento pedagógico e bem-estar em tempo real
+                </p>
               </div>
+
               <button
+                type="button"
                 onClick={() => onNavigateToTab("diaadia")}
-                className="text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-slate-650 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
               >
-                <span>Ver diário completo</span>
+                <span>Histórico completo</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Visual Operational Status Grid with Progress Bars */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-1">
-              {/* Metric 1: Meals */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-300 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200 uppercase font-bold">Alimentação</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                </div>
-                <strong className="text-xs text-slate-950 dark:text-white font-bold block">
+            {/* 3 Core Status Indicators - Quiet Typography, Zero Artificial Bars */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 py-1">
+              <div className="space-y-1">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">
+                  Alimentação
+                </span>
+                <strong className="text-sm font-bold text-slate-900 dark:text-slate-100 block">
                   {todayOccurrence.meals?.lunch === "excelente"
-                    ? "100% Consumido"
+                    ? "Almoço 100% consumido"
                     : todayOccurrence.meals?.lunch === "parcial"
-                    ? "Parcial (60%)"
-                    : "Recusa"}
+                    ? "Refeição parcial (60%)"
+                    : "Cardápio do dia servido"}
                 </strong>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-emerald-500 h-full rounded-full transition-all"
-                    style={{ width: todayOccurrence.meals?.lunch === "excelente" ? "100%" : "60%" }}
-                  />
-                </div>
+                <p className="text-xs text-slate-500">
+                  {todayOccurrence.meals?.details || "Alimentou-se com bom apetite."}
+                </p>
               </div>
 
-              {/* Metric 2: Sleep */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-300 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200 uppercase font-bold">Repouso</span>
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />
-                </div>
-                <strong className="text-xs text-slate-950 dark:text-white font-bold block">
-                  {todayOccurrence.sleep?.durationStr || "1h 15min"}
+              <div className="space-y-1 sm:border-l sm:border-slate-100 dark:sm:border-slate-800/80 sm:pl-6">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">
+                  Descanso & Repouso
+                </span>
+                <strong className="text-sm font-bold text-slate-900 dark:text-slate-100 block">
+                  {todayOccurrence.sleep?.durationStr || "1h 15min de sono"}
                 </strong>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: "85%" }} />
-                </div>
+                <p className="text-xs text-slate-500">
+                  {todayOccurrence.sleep?.details || "Descansou de forma tranquila."}
+                </p>
               </div>
 
-              {/* Metric 3: Behavior / Mood */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-300 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200 uppercase font-bold">Disposição</span>
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                </div>
-                <strong className="text-xs text-slate-950 dark:text-white font-bold block">
-                  {todayOccurrence.behaviorState === "otimo"
-                    ? "Radiante & Focado"
-                    : "Ativo & Brincalhão"}
+              <div className="space-y-1 sm:border-l sm:border-slate-100 dark:sm:border-slate-800/80 sm:pl-6">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">
+                  Disposição & Bem-estar
+                </span>
+                <strong className="text-sm font-bold text-slate-900 dark:text-slate-100 block">
+                  {todayOccurrence.behaviorState === "otimo" ? "Radiante & Focado" : "Ativo e participativo"}
                 </strong>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-amber-500 h-full rounded-full" style={{ width: "95%" }} />
-                </div>
-              </div>
-
-              {/* Metric 4: Medication */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-300 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200 uppercase font-bold">Medicação</span>
-                  <span className="w-2 h-2 rounded-full bg-slate-500" />
-                </div>
-                <strong className="text-xs text-slate-950 dark:text-white font-bold block">
-                  {activeStudent.occurrences?.[0]?.medicated?.wasMedicated ? "Administrada" : "Sem Prescrição"}
-                </strong>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-slate-500 h-full rounded-full" style={{ width: "100%" }} />
-                </div>
+                <p className="text-xs text-slate-500">
+                  Excelente interação com colegas e professores.
+                </p>
               </div>
             </div>
 
-            {/* Visual Routine Timeline Stepper (Régua da Jornada) */}
-            <div className="pt-2">
-              <span className="text-xs font-mono text-slate-800 dark:text-slate-200 uppercase font-bold block mb-2">
-                Jornada do Estudante Hoje:
+            {/* Daily Chronological Progression - Clean & Compact */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-3">
+              <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">
+                Momentos do Dia
               </span>
-              <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 font-bold">
-                  <span className="block font-mono text-[10px] text-emerald-700 dark:text-emerald-400">07:45</span>
-                  <span>Entrada ✔️</span>
-                </div>
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 font-bold">
-                  <span className="block font-mono text-[10px] text-emerald-700 dark:text-emerald-400">09:30</span>
-                  <span>Lanche ✔️</span>
-                </div>
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 font-bold">
-                  <span className="block font-mono text-[10px] text-emerald-700 dark:text-emerald-400">12:00</span>
-                  <span>Almoço ✔️</span>
-                </div>
-                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200 font-bold animate-pulse">
-                  <span className="block font-mono text-[10px] text-blue-700 dark:text-blue-400">14:00</span>
-                  <span>Oficina ⚡</span>
-                </div>
-                <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-bold">
-                  <span className="block font-mono text-[10px] text-slate-700 dark:text-slate-400">17:15</span>
-                  <span>Portaria 🚗</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs font-medium">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-slate-800">
+                  <span className="font-mono text-slate-500">07:45</span>
+                  <span>Entrada confirmada</span>
+                </span>
+                <span className="text-slate-300 dark:text-slate-700">→</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-slate-800">
+                  <span className="font-mono text-slate-500">12:00</span>
+                  <span>Almoço</span>
+                </span>
+                <span className="text-slate-300 dark:text-slate-700">→</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="font-mono text-emerald-700 dark:text-emerald-400">14:00</span>
+                  <span>Oficina Pedagógica</span>
+                </span>
+                <span className="text-slate-300 dark:text-slate-700">→</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-slate-500 border border-slate-200/50 dark:border-slate-800">
+                  <span className="font-mono">17:15</span>
+                  <span>Previsão de Saída</span>
+                </span>
               </div>
             </div>
 
-            {/* Teacher note (Concise) */}
-            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-xs flex items-center justify-between gap-2">
-              <span className="text-xs text-slate-850 dark:text-slate-100 font-medium italic">
-                "{todayOccurrence.teacherNote}"
-              </span>
-              <span className="text-xs font-mono text-slate-700 dark:text-slate-300 font-bold shrink-0">Coordenação Pedagógica</span>
-            </div>
+            {/* Teacher note */}
+            {todayOccurrence.teacherNote && (
+              <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 text-xs">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block mb-1">
+                  Observação da Coordenação Pedagógica
+                </span>
+                <p className="text-slate-700 dark:text-slate-300 italic font-serif text-sm">
+                  "{todayOccurrence.teacherNote}"
+                </p>
+              </div>
+            )}
           </div>
         );
 
       case "engajamento":
+        // Quiet engagement pill instead of huge chart
         return (
           <div
             key="feed-engajamento"
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           >
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="font-sans font-bold text-sm text-slate-950 dark:text-white">
-                  Evolução do Engajamento e Bem-estar
-                </h3>
-                <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">
-                  Acompanhamento contínuo dos últimos 15 dias · Índice Positivo: <strong className="text-slate-950 dark:text-white font-mono">{wellnessIndex}%</strong> ({dominantLabel})
-                </p>
-              </div>
-
-              <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold self-start sm:self-auto">
-                ● 15 dias monitorados
-              </div>
+            <div>
+              <h3 className="font-serif font-black text-base text-slate-950 dark:text-white">
+                Índice de Adaptação & Bem-estar
+              </h3>
+              <p className="text-xs text-slate-500">
+                Acompanhamento contínuo dos últimos 15 dias letivos
+              </p>
             </div>
 
-            {/* Trend Area Chart */}
-            <div className="h-44 w-full pt-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={moodTimeline}
-                  margin={{ top: 10, right: 5, left: -20, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="parentMoodGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop
-                        offset="5%"
-                        stopColor={branding?.primaryColor || "#0284c7"}
-                        stopOpacity={0.25}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor={branding?.primaryColor || "#0284c7"}
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="rgba(148, 163, 184, 0.12)"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fill: "currentColor", opacity: 0.6, fontSize: 9, fontFamily: "monospace" }}
-                  />
-                  <YAxis
-                    domain={[0.5, 4.5]}
-                    ticks={[1, 2, 3, 4]}
-                    tickFormatter={(val) => {
-                      if (val === 4) return "Excelente";
-                      if (val === 3) return "Engajado";
-                      if (val === 2) return "Calmo";
-                      if (val === 1) return "Acolhimento";
-                      return "";
-                    }}
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fill: "currentColor", opacity: 0.6, fontSize: 9, fontWeight: "bold" }}
-                  />
-                  <RechartsTooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="score"
-                    stroke={branding?.primaryColor || "#0284c7"}
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#parentMoodGradient)"
-                    activeDot={{
-                      r: 5,
-                      stroke: branding?.primaryColor || "#0284c7",
-                      strokeWidth: 2,
-                      fill: "#fff"
-                    }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="text-lg font-serif font-black text-slate-950 dark:text-white">
+                  {wellnessIndex}%
+                </span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 block font-medium">
+                  {dominantLabel}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateToTab("diaadia")}
+                className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
+              >
+                Ver histórico
+              </button>
             </div>
           </div>
         );
@@ -321,46 +235,38 @@ export const ParentDashboardFeed = memo(function ParentDashboardFeed({
         return (
           <div
             key="feed-academico"
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-4"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h3 className="font-sans font-bold text-sm text-slate-950 dark:text-white">
-                  Desempenho Acadêmico
+                <h3 className="font-serif font-black text-base text-slate-950 dark:text-white">
+                  Desempenho Acadêmico Recente
                 </h3>
-                <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">Médias do 2º bimestre corrente</p>
+                <p className="text-xs text-slate-500">Médias avaliativas do 2º bimestre</p>
               </div>
               <button
                 onClick={() => onNavigateToTab("academico")}
-                className="text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-slate-650 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer"
               >
-                <span>Ver Boletim Completo</span>
+                <span>Boletim completo</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {activeStudent.grades.slice(0, 3).map((g, idx) => {
                 const score = g.secondBimester || g.firstBimester || 8.0;
-                const percent = score * 10;
                 return (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[200px]">
-                        {g.subject.split(" (")[0]}
-                      </span>
-                      <strong className="font-mono text-slate-950 dark:text-white text-xs">
-                        {score.toFixed(1)} <span className="text-xs text-slate-700 dark:text-slate-300 font-bold">/ 10</span>
-                      </strong>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-1000 ${
-                          score >= 9.0 ? "bg-emerald-600" : score >= 8.0 ? "bg-amber-600" : "bg-rose-600"
-                        }`}
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
+                  <div
+                    key={idx}
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between"
+                  >
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate pr-2">
+                      {g.subject.split(" (")[0]}
+                    </span>
+                    <strong className="text-xs font-mono font-bold text-slate-950 dark:text-white shrink-0">
+                      {score.toFixed(1)} / 10
+                    </strong>
                   </div>
                 );
               })}
@@ -370,58 +276,31 @@ export const ParentDashboardFeed = memo(function ParentDashboardFeed({
 
       case "cobrancas":
       case "financeiro":
+        if (!pendingCobranca) return null; // Never clutter screen if all is paid!
         return (
           <div
             key="feed-cobrancas"
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="font-sans font-bold text-sm text-slate-950 dark:text-white">Status Financeiro</h3>
-                <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">Mensalidades e serviços escolares</p>
-              </div>
-              <button
-                onClick={() => onNavigateToTab("cobrancas")}
-                className="text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white flex items-center gap-1 cursor-pointer"
-              >
-                <span>Ver Extrato</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold block">
+                Fatura Escolar Aberta · Vencimento: {pendingCobranca.dueDate}
+              </span>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                {pendingCobranca.title}
+              </h3>
+              <strong className="text-lg font-serif font-black text-slate-950 dark:text-white block">
+                R$ {pendingCobranca.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </strong>
             </div>
 
-            {pendingCobranca ? (
-              <div className="bg-slate-50/70 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800/80 p-4 rounded-xl space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 font-mono">
-                      Aguardando Pagamento · Vencimento: {pendingCobranca.dueDate}
-                    </span>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">{pendingCobranca.title}</h4>
-                  </div>
-                  <strong className="text-sm font-bold text-slate-950 dark:text-white font-mono">
-                    R$ {pendingCobranca.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </strong>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onNavigateToTab("cobrancas")}
-                    className="flex-1 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold py-2 rounded-xl text-xs uppercase flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-xs"
-                  >
-                    <QrCode className="w-3.5 h-3.5" />
-                    <span>Pagar via Pix</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Situação Financeira Regularizada</span>
-                </div>
-                <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">Nenhuma fatura em aberto</span>
-              </div>
-            )}
+            <button
+              onClick={() => onNavigateToTab("cobrancas")}
+              className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
+            >
+              <QrCode className="w-3.5 h-3.5 text-amber-400 dark:text-amber-600" />
+              <span>Pagar com Pix Instantâneo</span>
+            </button>
           </div>
         );
 
@@ -429,114 +308,126 @@ export const ParentDashboardFeed = memo(function ParentDashboardFeed({
         return eventos && eventos.length > 0 ? (
           <div
             key="feed-agenda"
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-4"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-slate-800 dark:text-slate-200" />
-                <div>
-                  <h3 className="font-sans font-bold text-sm text-slate-950 dark:text-white">
-                    Próximos Eventos do Calendário
-                  </h3>
-                  <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">Compromissos e datas comemorativas</p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-serif font-black text-base text-slate-950 dark:text-white">
+                Próximos Eventos do Calendário
+              </h3>
               <button
                 onClick={() => onNavigateToTab("diaadia")}
-                className="text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-slate-650 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer"
               >
-                <span>Ver Calendário</span>
+                <span>Ver todos</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
               {eventos.slice(0, 2).map((ev) => (
                 <div
                   key={ev.id}
-                  className="p-3.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 space-y-1"
+                  className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-xs"
                 >
-                  <span className="text-[10px] font-bold uppercase font-mono px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-200">
-                    {ev.dateStr}
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px] font-bold text-slate-500">
+                      {ev.dateStr}
+                    </span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                      {ev.title}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    {ev.time}
                   </span>
-                  <h5 className="text-xs font-bold text-slate-950 dark:text-white">{ev.title}</h5>
-                  <p className="text-xs text-slate-800 dark:text-slate-200 line-clamp-1 font-medium">{ev.description}</p>
                 </div>
               ))}
             </div>
           </div>
         ) : null;
 
-      case "comunicados": {
-        const commItems = (comunicados && comunicados.length > 0)
-          ? comunicados.slice(0, 2)
-          : (latestAnnouncement ? [latestAnnouncement] : []);
-        return commItems.length > 0 ? (
+      case "comunicados":
+        return comunicados && comunicados.length > 0 ? (
           <div
             key="feed-comunicados"
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-4"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <Bell className="w-5 h-5 text-blue-600" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-950 dark:text-white uppercase tracking-wider font-mono">
-                    Comunicados & Avisos Oficiais
-                  </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">
-                    Informações e circulares emitidas pela escola para a família
-                  </p>
-                </div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="font-serif font-black text-base text-slate-950 dark:text-white">
+                  Comunicados Oficiais
+                </h3>
+                <p className="text-xs text-slate-500">Circulares recentes da coordenação</p>
               </div>
               <button
-                type="button"
                 onClick={() => onNavigateToTab("comunicados")}
-                className="text-xs font-bold text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer"
+                className="text-xs font-semibold text-slate-650 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer"
               >
-                Mural Completo →
+                <span>Ver circulares</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            <ComunicadosList
-              items={commItems}
-              compact={true}
-              onSelect={() => onNavigateToTab("comunicados")}
-            />
+
+            <div className="space-y-2">
+              {comunicados.slice(0, 2).map((c) => (
+                <div
+                  key={c.id}
+                  onClick={() => onNavigateToTab("comunicados")}
+                  className="p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 transition-colors cursor-pointer flex items-center justify-between text-xs"
+                >
+                  <div className="space-y-0.5 max-w-md">
+                    <span className="text-[10px] font-mono text-slate-400">
+                      {c.date} · {c.category || "Geral"}
+                    </span>
+                    <h4 className="font-bold text-slate-900 dark:text-white truncate">
+                      {c.title}
+                    </h4>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : null;
-      }
 
       case "momentos":
         return momentos && momentos.length > 0 ? (
           <div
             key="feed-momentos"
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-4"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <Camera className="w-5 h-5 text-amber-600" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-950 dark:text-white uppercase tracking-wider font-mono">
-                    Registros Pedagógicos & Momentos
-                  </h4>
-                  <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">
-                    Vivências e aprendizados registrados em sala de aula
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-serif font-black text-base text-slate-950 dark:text-white">
+                Mural de Atividades da Turma
+              </h3>
               <button
-                type="button"
                 onClick={() => onNavigateToTab("diaadia")}
-                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                className="text-xs font-semibold text-slate-650 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 cursor-pointer"
               >
-                Ver Galeria →
+                <span>Ver fotos</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            <MomentosList
-              items={momentos}
-              limit={2}
-              compact={true}
-              onSelect={() => onNavigateToTab("diaadia")}
-            />
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {momentos.slice(0, 4).map((m) => (
+                <div
+                  key={m.id}
+                  className="relative rounded-xl overflow-hidden aspect-video border border-slate-200 dark:border-slate-800 group"
+                >
+                  <img
+                    src={m.image}
+                    alt={m.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                    <span className="text-[10px] text-white font-medium truncate">
+                      {m.title}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null;
 
@@ -547,7 +438,7 @@ export const ParentDashboardFeed = memo(function ParentDashboardFeed({
 
   return (
     <div className="space-y-6">
-      {effectiveFeedOrder.map((sectionId) => renderModuleBlock(sectionId))}
+      {effectiveFeedOrder.map((modId) => renderModuleBlock(modId))}
     </div>
   );
 });

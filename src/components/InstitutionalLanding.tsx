@@ -393,130 +393,89 @@ export const InstitutionalLanding: React.FC<InstitutionalLandingProps> = ({
       </header>
 
       {/* =========================================================================
-          HERO SECTION: CINEMATIC, HIGH-IMPACT, CONCISE & 100% INTERACTIVE
+          HERO SECTION: EDITORIAL, FOCUSED AND RESPONSIVE
       ========================================================================= */}
-      <section className="relative w-full pt-8 sm:pt-14 pb-12 sm:pb-20 px-4 sm:px-8 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative pt-10 pb-16 sm:pt-16 sm:pb-24 px-4 sm:px-8 max-w-7xl mx-auto overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            
-            {/* Left Column: Punchy Editorial Copy & Direct CTAs */}
-            <div className="lg:col-span-6 space-y-6 text-left">
-              
-              {/* Status Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-700 dark:text-slate-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-semibold uppercase tracking-wider">{getLandingText("heroBadge", locale)}</span>
-              </div>
-
-              {/* Cinematic Headline */}
-              <h1 className="text-3xl sm:text-5xl xl:text-6xl font-serif font-black tracking-tight text-slate-950 dark:text-white leading-[1.12]">
-                {getLandingText("heroTitle", locale)}
-              </h1>
-
-              {/* Concise Subtitle */}
-              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal max-w-xl">
-                {getLandingText("heroSubtitle", locale)}
-              </p>
-
-              {/* Direct Launch Buttons Cluster */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    playTactileAudio(880, 0.08);
-                    onEnterDemoPortal("escola");
-                  }}
-                  className="px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-lg transition-all flex items-center justify-center gap-2.5 cursor-pointer hover:opacity-95 active:scale-95 group"
-                  style={{ backgroundColor: currentThemeColor }}
-                >
-                  <Monitor className="w-4 h-4" />
-                  <span>{locale === "en" ? "School Portal" : "Painel da Escola"}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    playTactileAudio(740, 0.07);
-                    onEnterDemoPortal("pais");
-                  }}
-                  className="px-5 py-3.5 rounded-2xl text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95"
-                >
-                  <Smartphone className="w-4 h-4 text-slate-500" />
-                  <span>{locale === "en" ? "Family Portal" : "Portal da Família"}</span>
-                </button>
-              </div>
-
-              {/* Trust Indicators Pill List */}
-              <div className="flex flex-wrap items-center gap-y-2 gap-x-4 pt-2 text-xs text-slate-700 dark:text-slate-200 font-semibold">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>{getLandingText("heroTrust1", locale)}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>{getLandingText("heroTrust2", locale)}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
-                  <span>{locale === "en" ? "LGPD / GDPR" : "Conformidade LGPD"}</span>
-                </div>
-              </div>
+          <div className="lg:col-span-7 space-y-6 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 text-xs font-mono font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{branding?.schoolName || "Colégio Alpha Integrado"} · Ano Letivo 2026</span>
             </div>
 
-            {/* Right Column: Hero School Photography with subtle live indicator */}
-            <div className="lg:col-span-6">
-              <div className="relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-2xl group bg-slate-100 dark:bg-slate-900">
-                <img
-                  src={schoolHeroStudents}
-                  alt={schoolName}
-                  className="w-full h-[360px] sm:h-[430px] lg:h-[470px] object-cover object-center transform transition-transform duration-700 group-hover:scale-[1.02]"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=1200";
-                  }}
-                />
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-black tracking-tight text-slate-950 dark:text-white leading-[1.12]">
+              {locale === "en" ? "Clear communication between families and school." : "Comunicação clara entre famílias e escola."}
+            </h1>
 
-                {/* Subtle vignette gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent pointer-events-none" />
+            <p className="text-base sm:text-lg text-slate-650 dark:text-slate-300 font-sans max-w-xl leading-relaxed">
+              {locale === "en"
+                ? "Routine updates, secure gatekeeper QR release, and academic journey in a calm, focused environment."
+                : "Rotina em tempo real, liberação ágil na portaria e acompanhamento pedagógico sem ruídos ou complexidade desnecessária."}
+            </p>
 
-                {/* Floating Live Badge Top Left */}
-                <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-white/20 shadow-lg text-xs font-semibold text-slate-900 dark:text-white">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>{schoolName}</span>
-                </div>
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => onEnterDemoPortal("pais")}
+                className="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-sans font-bold text-sm transition-all shadow-sm active:scale-98 cursor-pointer flex items-center gap-2"
+              >
+                <span>{locale === "en" ? "Enter as Family" : "Acessar como Família"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
 
-                {/* Floating Status Card at Bottom */}
-                <div className="absolute bottom-4 inset-x-4 p-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-xl flex items-center justify-between gap-3 text-left">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 font-bold" style={{ backgroundColor: currentThemeColor }}>
-                      <QrCode className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
-                        {locale === "en" ? "Synchronized Gate Access" : "Portaria Síncrona Ativa"}
-                      </span>
-                      <span className="text-xs text-slate-700 dark:text-slate-200 block truncate font-mono font-medium">
-                        {locale === "en" ? "Live entrance & dismissal" : "Entrada e saída em tempo real"}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playTactileAudio(880, 0.08);
-                      onEnterDemoPortal("escola");
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shrink-0 cursor-pointer shadow-xs hover:opacity-90 active:scale-95 transition-all"
-                    style={{ backgroundColor: currentThemeColor }}
-                  >
-                    {locale === "en" ? "Test Demo" : "Testar"}
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => onEnterDemoPortal("escola")}
+                className="px-5 py-3 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-850 font-sans font-bold text-sm transition-all shadow-2xs active:scale-98 cursor-pointer flex items-center gap-2"
+              >
+                <span>{locale === "en" ? "School Administration" : "Painel da Gestão"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onOpenAuth("login")}
+                className="px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                {locale === "en" ? "Existing user login →" : "Já possui conta? Entrar →"}
+              </button>
             </div>
 
+            {/* Quiet Trust Points */}
+            <div className="pt-4 grid grid-cols-3 gap-4 border-t border-slate-200/60 dark:border-slate-800/60 max-w-lg text-left">
+              <div>
+                <strong className="block text-lg font-serif font-black text-slate-950 dark:text-white">99.8%</strong>
+                <span className="text-[11px] text-slate-500 font-sans">Pontualidade na Portaria</span>
+              </div>
+              <div>
+                <strong className="block text-lg font-serif font-black text-slate-950 dark:text-white">100%</strong>
+                <span className="text-[11px] text-slate-500 font-sans">Privacidade & LGPD</span>
+              </div>
+              <div>
+                <strong className="block text-lg font-serif font-black text-slate-950 dark:text-white">&lt; 2 min</strong>
+                <span className="text-[11px] text-slate-500 font-sans">Tempo Médio de Saída</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Authentic Editorial Campus Imagery */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-900">
+              <img
+                src={schoolHeroStudents}
+                alt="Estudantes em ambiente escolar"
+                className="w-full h-[360px] sm:h-[440px] object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold block">
+                  Campus Alpha Integrado
+                </span>
+                <p className="text-sm font-semibold leading-snug">
+                  Ambiente seguro, focado no desenvolvimento integral de cada aluno.
+                </p>
+              </div>
+            </div>
           </div>
 
         </div>

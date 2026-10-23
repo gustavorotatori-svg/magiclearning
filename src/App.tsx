@@ -3818,10 +3818,12 @@ export function App() {
 
     if (parentQrStatus === "pronto" && prevStatus !== "pronto") {
       setShowSparklesBurst(true);
+      setIsScanSuccessAnimating(true);
       triggerGoldenConfettiForPortaria("btn-parent-qrcode");
       const timer = setTimeout(() => {
         setShowSparklesBurst(false);
-      }, 1500);
+        setIsScanSuccessAnimating(false);
+      }, 1800);
       return () => clearTimeout(timer);
     } else if (parentQrStatus === "erro" && prevStatus !== "erro") {
       // Automatic error diagnostic registration and troubleshooting popup display when status transitions to 'erro'
@@ -7251,17 +7253,36 @@ export function App() {
 
             {/* RIGHT: Portaria QR (Parents), Search (Mobile), WhiteLabel (Desktop), Theme, Notifications, User */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Portaria QR Code Quick Button for Parents */}
+              {/* Portaria QR Code Quick Button for Parents with Standby Pulse & Success Glow */}
               {userRole === "pais" && (
                 <button
                   type="button"
                   id="btn-parent-qrcode"
                   onClick={() => setQrCodeModalOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-                  title="QR Code Portaria"
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl font-bold text-xs cursor-pointer select-none transition-all duration-300 text-white ${
+                    isScanSuccessAnimating
+                      ? "is-success animate-qrcode-success bg-emerald-500 shadow-[0_0_24px_rgba(16,185,129,0.85)] ring-2 ring-emerald-300 scale-105"
+                      : "is-standby animate-qrcode-standby bg-emerald-600 hover:bg-emerald-700 shadow-xs ring-1 ring-emerald-400/50"
+                  }`}
+                  title={
+                    isScanSuccessAnimating
+                      ? "✅ QR Code Validado com Sucesso na Portaria!"
+                      : "QR Code Portaria (Standby ativo - clique para abrir)"
+                  }
+                  aria-label="QR Code Portaria"
                 >
-                  <QrCode className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline font-sans">Portaria</span>
+                  {isScanSuccessAnimating ? (
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-white animate-bounce" />
+                  ) : (
+                    <span className="relative flex h-2 w-2 mr-0.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-200"></span>
+                    </span>
+                  )}
+                  <QrCode className={`w-4 h-4 shrink-0 transition-transform ${isScanSuccessAnimating ? "rotate-12" : ""}`} />
+                  <span className="hidden sm:inline font-sans">
+                    {isScanSuccessAnimating ? "Validado!" : "Portaria"}
+                  </span>
                 </button>
               )}
 
@@ -8964,6 +8985,7 @@ export function App() {
                       locale={locale}
                       onLocaleChanged={handleSetLocale}
                       onUpdateStudentPhoto={handleUpdateStudentPhoto}
+                      onOpenPushPreferences={() => setIsPushPreferencesOpen(true)}
                     />
                   )}
 
@@ -9480,6 +9502,235 @@ export function App() {
           setIsRetentionMasteryConfigOpen(true);
         }}
       />
+
+      {/* OS-Style Floating Push Notification Toast */}
+      <PushNotificationToast
+        notification={activePushBanner}
+        onClose={() => setActivePushBanner(null)}
+        onNavigateToTab={(targetTab) => {
+          if (userRole === "pais") {
+            changeActiveTabWithMagic(targetTab);
+          } else if (userRole === "escola") {
+            setSchoolActiveTab(targetTab === "comunicados" ? "comunicados" : "dashboard");
+          }
+        }}
+        onOpenPreferences={() => setIsPushPreferencesOpen(true)}
+      />
+
+      {/* Push Notification Preferences & Key Events Modal */}
+      <NotificationPreferencesModal
+        isOpen={isPushPreferencesOpen}
+        onClose={() => setIsPushPreferencesOpen(false)}
+        onNotificationTriggered={(item) => setActivePushBanner(item)}
+      />
+
+      {/* 6. RESPONSIVE MOBILE BOTTOM NAVIGATION BAR (md:hidden) */}
+      {(userRole === "pais" || userRole === "escola" || userRole === "aluno") && (
+        <nav
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-xl px-2 py-1.5 flex items-center justify-around safe-bottom"
+          aria-label="Navegação Principal Mobile"
+        >
+          {userRole === "pais" && (
+            <>
+              <button
+                type="button"
+                onClick={() => changeActiveTabWithMagic("dashboard")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  activeTab === "dashboard"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4 mb-0.5" />
+                <span>Painel</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeActiveTabWithMagic("diaadia")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  activeTab === "diaadia"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Calendar className="w-4 h-4 mb-0.5" />
+                <span>Diário</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeActiveTabWithMagic("academico")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  activeTab === "academico"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <GraduationCap className="w-4 h-4 mb-0.5" />
+                <span>Boletim</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeActiveTabWithMagic("comunicados")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none relative ${
+                  activeTab === "comunicados"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Bell className="w-4 h-4 mb-0.5" />
+                <span>Avisos</span>
+                {comunicados.filter(c => !c.seenByParent?.includes("parent-1")).length > 0 && (
+                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-rose-500" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeActiveTabWithMagic("cobrancas")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none relative ${
+                  activeTab === "cobrancas"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <DollarSign className="w-4 h-4 mb-0.5" />
+                <span>Finanças</span>
+                {cobrancas.filter(c => c.status === "pendente" || c.status === "atrasado").length > 0 && (
+                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-amber-500" />
+                )}
+              </button>
+            </>
+          )}
+
+          {userRole === "escola" && (
+            <>
+              <button
+                type="button"
+                onClick={() => changeSchoolActiveTabWithMagic("dashboard")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  schoolActiveTab === "dashboard"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4 mb-0.5" />
+                <span>Painel</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeSchoolActiveTabWithMagic("agenda")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  schoolActiveTab === "agenda"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Calendar className="w-4 h-4 mb-0.5" />
+                <span>Turmas</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeSchoolActiveTabWithMagic("retiradas")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  schoolActiveTab === "retiradas"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Car className="w-4 h-4 mb-0.5" />
+                <span>Portaria</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeSchoolActiveTabWithMagic("comunicados")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  schoolActiveTab === "comunicados"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <BellRing className="w-4 h-4 mb-0.5" />
+                <span>Avisos</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => changeSchoolActiveTabWithMagic("alunos")}
+                className={`flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  schoolActiveTab === "alunos"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Users className="w-4 h-4 mb-0.5" />
+                <span>CRM</span>
+              </button>
+            </>
+          )}
+
+          {userRole === "aluno" && (
+            <>
+              <button
+                type="button"
+                onClick={() => setStudentActiveTab("simplificada")}
+                className={`flex flex-col items-center justify-center min-w-[60px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  studentActiveTab === "simplificada" || studentActiveTab === "dashboard"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                <CheckCircle2 className="w-4 h-4 mb-0.5" />
+                <span>Lições</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStudentActiveTab("horarios")}
+                className={`flex flex-col items-center justify-center min-w-[60px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  studentActiveTab === "horarios"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                <Clock className="w-4 h-4 mb-0.5" />
+                <span>Horários</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStudentActiveTab("conquistas")}
+                className={`flex flex-col items-center justify-center min-w-[60px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  studentActiveTab === "conquistas"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                <Award className="w-4 h-4 mb-0.5" />
+                <span>Conquistas</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStudentActiveTab("completa")}
+                className={`flex flex-col items-center justify-center min-w-[60px] min-h-[44px] py-1 px-2 rounded-xl text-[10px] font-bold transition-colors cursor-pointer select-none ${
+                  studentActiveTab === "completa"
+                    ? "text-amber-600 dark:text-amber-400 font-extrabold"
+                    : "text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                <Sparkles className="w-4 h-4 mb-0.5" />
+                <span>Geral</span>
+              </button>
+            </>
+          )}
+        </nav>
+      )}
 
     </div>
   );

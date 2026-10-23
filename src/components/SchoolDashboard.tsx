@@ -742,228 +742,176 @@ export const SchoolDashboard = memo(function SchoolDashboard({
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. EXECUTIVE 6-CARD HIGH-DENSITY KPI STRIP WITH VISUAL PROGRESS */}
+      {/* 2. EXECUTIVE 3-METRIC SUMMARY (CALM, EDITORIAL, ZERO DECORATIVE PROGRESS BARS) */}
       {/* ========================================================================= */}
-      <section aria-label="Indicadores Principais" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+      <section aria-label="Indicadores Vitais da Unidade" className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
-        {/* KPI 1: Matrículas e Ocupação */}
+        {/* Metric 1: Matrículas e Alunos Ativos */}
         <div 
           onClick={onNavigateToFunnelStats || onNavigateToRematricula}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-2 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors"
-          title="Ver Estatísticas de Conversão do Funil de Rematrícula"
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 cursor-pointer hover:border-slate-400 dark:hover:border-slate-700 transition-colors space-y-1.5"
+          title="Ver Estatísticas de Matrículas e Vagas"
         >
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider font-sans">Alunos Ativos</span>
-            <Users className="w-4 h-4 text-slate-400" />
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">Corpo Discente</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">94.8% Ocupação</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">450</span>
-            <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">94.8%</span>
+            <span className="text-2xl sm:text-3xl font-serif font-black text-slate-950 dark:text-white">450</span>
+            <span className="text-xs text-slate-500 font-sans">alunos ativos matriculados</span>
           </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: "94.8%" }} />
-          </div>
-          <p className="text-[11px] text-slate-500 font-sans">353 rematrículas confirmadas</p>
+          <p className="text-xs text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            353 rematrículas digitais confirmadas para o próximo ciclo
+          </p>
         </div>
 
-        {/* KPI 2: Faturamento Previsto */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider font-sans">Faturamento Previsto</span>
-            <DollarSign className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100">R$ 458.500</span>
-            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">+3.2%</span>
-          </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: "96%" }} />
-          </div>
-          <p className="text-[11px] text-slate-500 font-sans">Competência Junho/2026</p>
-        </div>
-
-        {/* KPI 3: Arrecadação Liquidada */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider font-sans">Valor Liquidado</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100">R$ 418.200</span>
-            <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400 font-semibold">91.2%</span>
-          </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-blue-500 h-full rounded-full" style={{ width: "91.2%" }} />
-          </div>
-          <p className="text-[11px] text-slate-500 font-sans">Meta de arrecadação batida</p>
-        </div>
-
-        {/* KPI 4: Inadimplência Consolidada */}
+        {/* Metric 2: Frequência e Portaria Hoje */}
         <div 
-          onClick={() => {
-            setActiveView("financeiro");
-            setFinancialChartView("inadimplencia");
-            document.getElementById("erp-delinquency-visual-module")?.scrollIntoView({ behavior: "smooth" });
-          }}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-2 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors"
-          title="Ver Histórico de Inadimplência Mensal do ERP"
+          onClick={() => setActiveView("operacao")}
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 cursor-pointer hover:border-slate-400 dark:hover:border-slate-700 transition-colors space-y-1.5"
+          title="Ver Estatísticas da Portaria e Presença"
         >
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider font-sans">Inadimplência ERP</span>
-            <AlertCircle className="w-4 h-4 text-amber-500" />
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">Presença & Acesso</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">● Portaria Ágil</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">3.8%</span>
-            <span className="text-[10px] font-mono text-amber-600 font-semibold">Teto: 3.0%</span>
+            <span className="text-2xl sm:text-3xl font-serif font-black text-slate-950 dark:text-white">97.4%</span>
+            <span className="text-xs text-slate-500 font-sans">taxa de frequência hoje</span>
           </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-amber-500 h-full rounded-full" style={{ width: "63%" }} />
-          </div>
-          <p className="text-[11px] text-slate-500 font-sans">14 faturas em acompanhamento</p>
+          <p className="text-xs text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            Tempo médio de liberação: 2.1 minutos por veículo
+          </p>
         </div>
 
-        {/* KPI 5: Média Pedagógica Institucional */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider font-sans">Média Escolar</span>
-            <GraduationCap className="w-4 h-4 text-slate-400" />
+        {/* Metric 3: Arrecadação e Adimplência */}
+        <div 
+          onClick={() => setActiveView("financeiro")}
+          className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 cursor-pointer hover:border-slate-400 dark:hover:border-slate-700 transition-colors space-y-1.5"
+          title="Ver Detalhes do Fluxo Financeiro"
+        >
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">Arrecadação Mensal</span>
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">96.2% Liquidado</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">8.15</span>
-            <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold">/ 10.0</span>
+            <span className="text-2xl sm:text-3xl font-serif font-black text-slate-950 dark:text-white">R$ 418.200</span>
           </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-indigo-500 h-full rounded-full" style={{ width: "81.5%" }} />
-          </div>
-          <p className="text-[11px] text-slate-500 font-sans">94.6% taxa de aprovação</p>
-        </div>
-
-        {/* KPI 6: Eficiência Portaria e Presença */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-[11px] font-semibold uppercase tracking-wider font-sans">Fila Portaria</span>
-            <Clock className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">2.1 min</span>
-            <span className="text-[10px] font-mono text-emerald-600 font-semibold">ágil</span>
-          </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-sky-500 h-full rounded-full" style={{ width: "95%" }} />
-          </div>
-          <p className="text-[11px] text-slate-500 font-sans">97.4% frequência registrada</p>
+          <p className="text-xs text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            Competência Junho/2026 conciliada via ERP
+          </p>
         </div>
 
       </section>
 
       {/* ========================================================================= */}
-      {/* 2.1 PAINEL VISUAL DE DECISÃO RÁPIDA (STUDENTS ACTION CARDS) */}
+      {/* 2.1 PAINEL EXECUTIVO DE PRIORIDADES DO DIA (APENAS NA VISÃO GERAL) */}
       {/* ========================================================================= */}
-      <section aria-label="Painel de Decisão Rápida" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
-            <h2 className="text-sm font-bold uppercase tracking-wider font-sans text-slate-900 dark:text-slate-100">
-              Painel Visual de Acompanhamento Rápido
-            </h2>
-          </div>
-          <span className="text-[11px] font-mono text-slate-500">
-            Ações Diretas sem Textos Longos
-          </span>
-        </div>
+      {activeView === "visao_geral" && (
+        <section aria-label="Prioridades Operacionais" className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 className="text-base font-serif font-black text-slate-950 dark:text-white tracking-tight">
+                Prioridades de Gestão de Hoje
+              </h2>
+              <p className="text-xs text-slate-500">
+                Itens que requerem decisão ou acompanhamento da coordenação
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {estudantes.slice(0, 4).map((est, idx) => {
-            const isLate = idx === 1;
-            const isAlert = idx === 2;
-            return (
-              <div
-                key={est.id}
-                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/60 flex flex-col justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-2xs"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveView("pedagogico")}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
               >
-                <div className="flex items-start gap-3">
-                  <div className="relative shrink-0">
-                    <img
-                      src={est.avatar || "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?auto=format&fit=crop&q=80&w=150"}
-                      alt={est.name}
-                      className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
-                    />
-                    <span className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${
-                      isLate ? "bg-rose-500" : isAlert ? "bg-amber-500" : "bg-emerald-500"
-                    }`} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                      {est.name}
-                    </h3>
-                    <span className="text-[10px] font-mono text-slate-500 block truncate">
-                      {est.grade}
-                    </span>
-                    <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono ${
-                      isLate
-                        ? "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
-                        : isAlert
-                        ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
-                        : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
-                    }`}>
-                      {isLate ? "Fatura em Aberto" : isAlert ? "Recuperação Paralela" : "100% Em Dia"}
-                    </span>
-                  </div>
-                </div>
+                Painel Pedagógico →
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveView("financeiro")}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
+              >
+                Painel Financeiro →
+              </button>
+            </div>
+          </div>
 
-                {/* 1-Click Visual Action Buttons */}
-                <div className="flex items-center gap-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => handleSendPixReminder(est.parentName || "Responsável")}
-                    className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold transition-colors cursor-pointer text-center"
-                    title="Disparar lembrete via WhatsApp"
-                  >
-                    WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleScheduleTutoria(est.name)}
-                    className="flex-1 py-1.5 px-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 text-[10px] font-semibold transition-colors cursor-pointer text-center"
-                    title="Ver boletim e desempenho"
-                  >
-                    Boletim
-                  </button>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Priority 1: Pedagogical Attention */}
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-3 flex flex-col justify-between">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold block">
+                  Acompanhamento Pedagógico
+                </span>
+                <strong className="text-sm font-bold text-slate-900 dark:text-white block">
+                  {criticalPedagogicalStudents.length} Estudantes Abaixo da Meta
+                </strong>
+                <p className="text-xs text-slate-500">
+                  Alunos com média inferior a {masteryThreshold.toFixed(1)} no 2º bimestre aguardando reforço.
+                </p>
               </div>
-            );
-          })}
-        </div>
-      </section>
+              <button
+                type="button"
+                onClick={() => setActiveView("pedagogico")}
+                className="w-full py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-50 transition-colors cursor-pointer text-center"
+              >
+                Ver Alunos e Agendar Tutoria
+              </button>
+            </div>
 
-      {/* 🧠 MOTOR DE RECOMENDAÇÕES EXECUTIVAS & PRÓXIMAS DECISÕES */}
-      <RecommendationEngineWidget
-        role="escola"
-        estudantes={estudantes}
-        cobrancas={cobrancas}
-        comunicados={comunicados}
-        momentos={momentos}
-        onExecuteAction={(rec) => {
-          if (rec.actionType === "navigate_tab" && rec.actionPayload?.tab) {
-            onNavigateToTab(rec.actionPayload.tab as any);
-            trackUserActivity({
-              userId: "user-current",
-              role: "escola",
-              type: "custom_interaction",
-              title: `Gestor seguiu recomendação: "${rec.title}"`,
-              entityId: rec.id,
-              entityTitle: rec.title,
-            });
-          }
-        }}
-        onToast={(msg, type) => setToastMsg({ message: msg, type: type === "error" ? "error" : "success" })}
-      />
+            {/* Priority 2: Portaria ao Vivo */}
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-3 flex flex-col justify-between">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold block">
+                  Operação de Portaria
+                </span>
+                <strong className="text-sm font-bold text-slate-900 dark:text-white block">
+                  Fluxo Contínuo & Seguro
+                </strong>
+                <p className="text-xs text-slate-500">
+                  438 presenças computadas. Fila de veículos em regime normal com liberação por QR Code.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateToTab("retiradas")}
+                className="w-full py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-50 transition-colors cursor-pointer text-center"
+              >
+                Abrir Fila de Carros em Tempo Real
+              </button>
+            </div>
+
+            {/* Priority 3: Pendências Financeiras */}
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-3 flex flex-col justify-between">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-blue-600 dark:text-blue-400 font-bold block">
+                  Cobrança & Inadimplência
+                </span>
+                <strong className="text-sm font-bold text-slate-900 dark:text-white block">
+                  Taxa em 3.8% (Meta: 3.0%)
+                </strong>
+                <p className="text-xs text-slate-500">
+                  14 faturas em acompanhamento na régua automatizada de cobrança Pix via WhatsApp.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveView("financeiro")}
+                className="w-full py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-50 transition-colors cursor-pointer text-center"
+              >
+                Acessar Régua e Extrato ERP
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ========================================================================= */}
       {/* 3. SECTION: FINANCIAL PERFORMANCE & HIGH-DENSITY LEDGER */}
-      {/* (Rendered when in 'visao_geral' or 'financeiro') */}
+      {/* (Rendered ONLY in 'financeiro') */}
       {/* ========================================================================= */}
-      {(activeView === "visao_geral" || activeView === "financeiro") && (
+      {activeView === "financeiro" && (
         <div className="space-y-6">
           {/* Componente Visual Dedicado: Histórico de Inadimplência Mensal via Recharts & ERP */}
           <ErpMonthlyDelinquencyChart
@@ -1259,9 +1207,9 @@ export const SchoolDashboard = memo(function SchoolDashboard({
 
       {/* ========================================================================= */}
       {/* 4. SECTION: PEDAGOGICAL PERFORMANCE & HIGH-DENSITY CLASS MATRIX */}
-      {/* (Rendered when in 'visao_geral' or 'pedagogico') */}
+      {/* (Rendered ONLY in 'pedagogico') */}
       {/* ========================================================================= */}
-      {(activeView === "visao_geral" || activeView === "pedagogico") && (
+      {activeView === "pedagogico" && (
         <section aria-labelledby="heading-pedagogico" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-6">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -1471,9 +1419,9 @@ export const SchoolDashboard = memo(function SchoolDashboard({
 
       {/* ========================================================================= */}
       {/* 5. SECTION: OPERATION, GATE LOGISTICS & DAILY ROUTINE */}
-      {/* (Rendered when in 'visao_geral' or 'operacao') */}
+      {/* (Rendered ONLY in 'operacao') */}
       {/* ========================================================================= */}
-      {(activeView === "visao_geral" || activeView === "operacao") && (
+      {activeView === "operacao" && (
         <section aria-labelledby="heading-operacao" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-6">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">

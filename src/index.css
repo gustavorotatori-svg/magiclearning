@@ -894,6 +894,54 @@ input:focus, select:focus, textarea:focus {
   transition: scale 0.1s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+/* 🟢 QR Code Scanner Standby Pulse Animation (#btn-parent-qrcode) */
+@keyframes qrcode-standby-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45), 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0), 0 0 14px 3px rgba(16, 185, 129, 0.35);
+    transform: scale(1.025);
+  }
+}
+
+/* 🌟 QR Code Valid Scan Detected 'Success' Glow Transition (#btn-parent-qrcode) */
+@keyframes qrcode-success-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.8), 0 0 0 0 rgba(16, 185, 129, 0.5);
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  25% {
+    box-shadow: 0 0 0 8px rgba(52, 211, 153, 0.4), 0 0 26px 8px rgba(16, 185, 129, 0.8);
+    transform: scale(1.08);
+    filter: brightness(1.25);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(52, 211, 153, 0), 0 0 20px 5px rgba(16, 185, 129, 0.65);
+    transform: scale(1.05);
+    filter: brightness(1.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0), 0 0 10px 2px rgba(16, 185, 129, 0.4);
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.animate-qrcode-standby,
+#btn-parent-qrcode.is-standby {
+  animation: qrcode-standby-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: transform, box-shadow;
+}
+
+.animate-qrcode-success,
+#btn-parent-qrcode.is-success {
+  animation: qrcode-success-glow 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, box-shadow, filter;
+}
+
 /* 🔔 Subtle Hardware-Accelerated Pendulum Bell Shake Animation 🔔 */
 @keyframes bell-shake {
   0%, 100% { transform: rotate(0deg); }

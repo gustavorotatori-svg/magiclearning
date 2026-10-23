@@ -208,7 +208,7 @@ export interface NotificationItem {
   read: boolean;
   targetTab: "comunicados" | "diaadia" | "academico" | "cobrancas" | "acesso";
   iconType: "announcement" | "occurrence" | "chat" | "calendar" | "faturamento" | "message" | "deadline" | "promotion";
-  category?: "message" | "deadline" | "promotion" | "system" | "financial" | "academic" | "access";
+  category?: "message" | "new_message" | "deadline" | "promotion" | "system" | "financial" | "academic" | "access" | "security";
   studentName?: string;
   actionLabel?: string;
   actionUrl?: string;
