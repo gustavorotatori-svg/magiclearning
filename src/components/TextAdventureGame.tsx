@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Heart, 
@@ -17,10 +17,39 @@ import {
   Shield,
   Layers,
   CheckCircle2,
-  X
+  X,
+  Save,
+  BookmarkCheck,
+  Trash2,
+  Play,
+  Check
 } from "lucide-react";
 
 export type GameDifficulty = "aprendiz" | "explorador" | "sobrevivente";
+
+export const SAVE_STORAGE_KEY = "text_adventure_saved_game";
+
+export interface SavedGameState {
+  version: number;
+  savedAt: string;
+  formattedDate: string;
+  playerName: string;
+  difficulty: GameDifficulty;
+  currentHealth: number;
+  maxHealth: number;
+  currentSceneId: string;
+  sceneTitle: string;
+  storyPathName: string;
+  gameState: "playing" | "game_over" | "victory";
+  score: number;
+  turnCount: number;
+  lastTurnScoreGained: number;
+  lastScoreCategory: "decisao" | "item" | "marco" | "perigo" | null;
+  lastScoreReason: string | null;
+  scoreHistory: ScoreLogEntry[];
+  inventory: string[];
+  healthLogs: HealthLogEntry[];
+}
 
 export interface ScoreLogEntry {
   id: string;
@@ -587,6 +616,25 @@ export const TextAdventureGame: React.FC<TextAdventureGameProps> = ({
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
+  // Save Game states
+  const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
+  const [saveFeedback, setSaveFeedback] = useState<boolean>(false);
+
+  // Read saved game from localStorage on component mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as SavedGameState;
+        if (parsed && parsed.currentSceneId && SCENES_PT[parsed.currentSceneId]) {
+          setSavedGame(parsed);
+        }
+      }
+    } catch {
+      // LocalStorage access or parse error fallback
+    }
+  }, []);
+
   // Visual effects
   const [recentDamage, setRecentDamage] = useState<number | null>(null);
   const [recentHeal, setRecentHeal] = useState<number | null>(null);
@@ -701,6 +749,90 @@ export const TextAdventureGame: React.FC<TextAdventureGameProps> = ({
         sceneTitle: "O Portal de Calcário"
       }
     ]);
+  };
+
+  // Save current progress to localStorage
+  const handleSaveGame = () => {
+    try {
+      const activeScene = SCENES_PT[currentSceneId] || SCENES_PT.entrance;
+      const now = new Date();
+      const stateToSave: SavedGameState = {
+        version: 1,
+        savedAt: now.toISOString(),
+        formattedDate: now.toLocaleDateString("pt-BR", { 
+          day: "2-digit", 
+          month: "2-digit", 
+          hour: "2-digit", 
+          minute: "2-digit" 
+        }),
+        playerName,
+        difficulty,
+        currentHealth,
+        maxHealth,
+        currentSceneId,
+        sceneTitle: activeScene.title,
+        storyPathName: activeScene.storyPathName,
+        gameState,
+        score,
+        turnCount,
+        lastTurnScoreGained,
+        lastScoreCategory,
+        lastScoreReason,
+        scoreHistory,
+        inventory,
+        healthLogs
+      };
+      localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(stateToSave));
+      setSavedGame(stateToSave);
+      playSfx("score");
+      setSaveFeedback(true);
+      setTimeout(() => setSaveFeedback(false), 2200);
+      onToast?.(`Jogo salvo com sucesso! (${score} pts • Rodada #${turnCount})`, "success");
+    } catch {
+      onToast?.("Não foi possível salvar o jogo no navegador.", "error");
+    }
+  };
+
+  // Resume / Load game from localStorage
+  const handleLoadSavedGame = () => {
+    if (!savedGame) return;
+    try {
+      const savedDiff = savedGame.difficulty || "explorador";
+      setDifficulty(savedDiff);
+      setCurrentHealth(savedGame.currentHealth ?? DIFFICULTY_CONFIG[savedDiff].maxHp);
+      const targetScene = savedGame.currentSceneId && SCENES_PT[savedGame.currentSceneId] 
+        ? savedGame.currentSceneId 
+        : "entrance";
+      setCurrentSceneId(targetScene);
+      setGameState(savedGame.gameState || "playing");
+      setScore(savedGame.score ?? 0);
+      setTurnCount(savedGame.turnCount ?? 1);
+      setLastTurnScoreGained(savedGame.lastTurnScoreGained ?? 0);
+      setLastScoreCategory(savedGame.lastScoreCategory ?? null);
+      setLastScoreReason(savedGame.lastScoreReason ?? null);
+      setScoreHistory(savedGame.scoreHistory || []);
+      setInventory(savedGame.inventory || []);
+      setHealthLogs(savedGame.healthLogs || []);
+      playSfx("heal");
+      onToast?.(`Progresso restaurado! Cenário: ${savedGame.sceneTitle} (${savedGame.score} pts)`, "success");
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } catch {
+      onToast?.("Falha ao recuperar os dados do jogo salvo.", "error");
+    }
+  };
+
+  // Delete saved game from localStorage
+  const handleDeleteSavedGame = () => {
+    try {
+      localStorage.removeItem(SAVE_STORAGE_KEY);
+      setSavedGame(null);
+      playSfx("click");
+      onToast?.("Progresso salvo excluído do navegador.", "info");
+    } catch {
+      // Ignore
+    }
   };
 
   // Handle player choice execution
@@ -948,6 +1080,43 @@ export const TextAdventureGame: React.FC<TextAdventureGameProps> = ({
             <span className="hidden sm:inline">Histórico</span>
           </button>
 
+          {/* Save Game Button */}
+          <button
+            type="button"
+            onClick={handleSaveGame}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all cursor-pointer ${
+              saveFeedback 
+                ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/60" 
+                : "bg-slate-800 hover:bg-slate-750 text-slate-300 border-slate-700 hover:text-slate-100"
+            }`}
+            title="Salvar progresso atual no navegador (localStorage)"
+          >
+            {saveFeedback ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Salvo!</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Salvar</span>
+              </>
+            )}
+          </button>
+
+          {/* Load / Resume Saved Game Button in Navbar (if available) */}
+          {savedGame && (
+            <button
+              type="button"
+              onClick={handleLoadSavedGame}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition-colors cursor-pointer"
+              title={`Retomar jogo salvo em ${savedGame.formattedDate} (${savedGame.score} pts • Rodada #${savedGame.turnCount})`}
+            >
+              <BookmarkCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Carregar ({savedGame.score} pts)</span>
+            </button>
+          )}
+
           {/* Restart Button */}
           <button
             type="button"
@@ -1053,225 +1222,361 @@ export const TextAdventureGame: React.FC<TextAdventureGameProps> = ({
       </div>
 
       {/* =========================================================================
-          NARRATIVE SCENE & CHOICES CONTAINER
+          NARRATIVE SCENE & CHOICES CONTAINER WITH MOTION FRAME TRANSITIONS
           ========================================================================= */}
       <div ref={scrollRef} className="p-6 sm:p-8 space-y-6 max-h-[60vh] overflow-y-auto">
-        
-        {/* GAME OVER STATE */}
-        {gameState === "game_over" ? (
-          <div className="p-8 text-center space-y-5 rounded-2xl bg-rose-950/30 border border-rose-900/60">
-            <div className="w-16 h-16 rounded-2xl bg-rose-950/80 border border-rose-800 mx-auto flex items-center justify-center text-rose-400">
-              <Heart className="w-8 h-8" />
-            </div>
-            <div className="space-y-2">
-              <span className="text-xs font-mono uppercase tracking-widest text-rose-400 font-bold">
-                Jornada Interrompida
-              </span>
-              <h3 className="text-2xl font-serif font-black text-white">
-                Seus Pontos de Vida Chegaram a Zero
-              </h3>
-              <p className="text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
-                As armadilhas e perigos das catacumbas sobrepujaram suas forças nesta expedição.
-              </p>
-            </div>
-
-            {/* Final Scorecard */}
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 max-w-md mx-auto space-y-2 text-left">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-400">Pontuação Conquistada:</span>
-                <strong className="text-amber-400 text-sm font-bold">{score} Pontos</strong>
-              </div>
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-400">Rodadas Sobrevividas:</span>
-                <strong className="text-slate-200">{turnCount}</strong>
-              </div>
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-400">Itens Descobertos:</span>
-                <strong className="text-slate-200">{inventory.length}</strong>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => resetAdventure()}
-              className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all shadow-md active:scale-98 cursor-pointer inline-flex items-center gap-2"
+        <AnimatePresence mode="wait">
+          {/* GAME OVER STATE WITH CINEMATIC MOTION FRAME */}
+          {gameState === "game_over" ? (
+            <motion.div
+              key="scene-frame-game-over"
+              initial={{ opacity: 0, scale: 0.93, y: 22, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.93, y: -18, filter: "blur(4px)" }}
+              transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+              className="p-8 text-center space-y-5 rounded-2xl bg-rose-950/30 border border-rose-900/60 relative overflow-hidden"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Tentar Novamente (Reiniciar com 0 Pts)</span>
-            </button>
-          </div>
-        ) : gameState === "victory" ? (
-          /* VICTORY STATE */
-          <div className="p-8 text-center space-y-5 rounded-2xl bg-emerald-950/30 border border-emerald-900/60">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 border border-emerald-700 mx-auto flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/50">
-              <Trophy className="w-8 h-8" />
-            </div>
-            <div className="space-y-2">
-              <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-bold">
-                Conquista Épica
-              </span>
-              <h3 className="text-3xl font-serif font-black text-white">
-                O Códice da Sabedoria foi Resgatado!
-              </h3>
-              <p className="text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
-                Parabéns, <strong>{playerName}</strong>! Você superou todas as provas e enigmas das catacumbas e conquistou a glória dos sábios da academia!
-              </p>
-            </div>
-
-            {/* Detailed Final Scoreboard */}
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 max-w-md mx-auto space-y-3 text-left">
-              <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800 pb-2">
-                Boletim Final da Expedição
-              </h4>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-300">Pontuação Total:</span>
-                <strong className="text-xl font-serif font-black text-amber-400">{score} Pontos</strong>
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-rose-500/50 to-transparent pointer-events-none" />
+              <div className="w-16 h-16 rounded-2xl bg-rose-950/80 border border-rose-800 mx-auto flex items-center justify-center text-rose-400">
+                <Heart className="w-8 h-8" />
               </div>
-              <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>Classificação Obtida:</span>
-                <strong className="text-emerald-400">
-                  {score >= 800 ? "Lenda da Academia" : score >= 500 ? "Mestre Estrategista" : "Explorador Notável"}
-                </strong>
-              </div>
-              <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>Vida Restante:</span>
-                <strong className="text-slate-200">{currentHealth} / {maxHealth} HP</strong>
-              </div>
-              <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>Relíquias no Inventário:</span>
-                <strong className="text-slate-200">{inventory.length} itens</strong>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => resetAdventure()}
-              className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all shadow-md active:scale-98 cursor-pointer inline-flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Jogar Novamente por Outro Caminho</span>
-            </button>
-          </div>
-        ) : (
-          /* ACTIVE PLAYING SCENARIO */
-          <div className="space-y-6">
-            
-            {/* Scenario Header */}
-            <div className="space-y-2 border-b border-slate-800/80 pb-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
-                  {currentScene.locationKicker}
+              <div className="space-y-2">
+                <span className="text-xs font-mono uppercase tracking-widest text-rose-400 font-bold">
+                  Jornada Interrompida
                 </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  {currentScene.storyPathName} · Rodada #{turnCount}
-                </span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-serif font-black text-slate-100 tracking-tight">
-                {currentScene.title}
-              </h3>
-            </div>
-
-            {/* Narrative Scenario Text */}
-            <div className="space-y-3 text-slate-300 text-sm sm:text-base leading-relaxed">
-              <p>{currentScene.narrativeText}</p>
-              {currentScene.atmosphereText && (
-                <p className="text-xs sm:text-sm text-slate-400 italic bg-slate-900/60 p-3 rounded-xl border border-slate-850">
-                  "{currentScene.atmosphereText}"
+                <h3 className="text-2xl font-serif font-black text-white">
+                  Seus Pontos de Vida Chegaram a Zero
+                </h3>
+                <p className="text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
+                  As armadilhas e perigos das catacumbas sobrepujaram suas forças nesta expedição.
                 </p>
-              )}
-            </div>
-
-            {/* Multiple Choices Section */}
-            <div className="space-y-3 pt-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold block">
-                Escolha sua próxima ação:
-              </span>
-
-              <div className="grid grid-cols-1 gap-3">
-                {currentScene.choices.map((choice, idx) => (
-                  <button
-                    key={choice.id}
-                    type="button"
-                    onClick={() => handleMakeChoice(choice)}
-                    className="p-4 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 transition-all text-left flex items-start justify-between gap-4 group cursor-pointer active:scale-99"
-                  >
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-slate-800 text-[11px] font-mono text-amber-400 font-bold flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
-                          {idx + 1}
-                        </span>
-                        <strong className="text-sm font-semibold text-slate-100 group-hover:text-amber-300 transition-colors">
-                          {choice.label}
-                        </strong>
-                      </div>
-                      <p className="text-xs text-slate-400 pl-7">
-                        {choice.description}
-                      </p>
-                    </div>
-
-                    <div className="shrink-0 flex items-center gap-2 pt-0.5">
-                      {choice.scorePoints > 0 && (
-                        <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-bold">
-                          +{choice.scorePoints} pts
-                        </span>
-                      )}
-                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
-                    </div>
-                  </button>
-                ))}
               </div>
-            </div>
 
-            {/* =========================================================================
-                TURN SCORE SUMMARY (Displays score to player at the end of each turn!)
-                ========================================================================= */}
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                  <Award className="w-4 h-4" />
+              {/* Final Scorecard */}
+              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 max-w-md mx-auto space-y-2 text-left">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-slate-400">Pontuação Conquistada:</span>
+                  <strong className="text-amber-400 text-sm font-bold">{score} Pontos</strong>
                 </div>
-                <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block font-semibold">
-                    Pontuação nesta Rodada #{turnCount - 1 > 0 ? turnCount - 1 : 1}:
-                  </span>
-                  <span className="font-semibold text-slate-200">
-                    {lastTurnScoreGained > 0 ? (
-                      <>+{lastTurnScoreGained} pontos conquistados ({lastScoreReason || "Avanço da história"})</>
-                    ) : (
-                      "Início da expedição com 0 pontos acumulados."
-                    )}
-                  </span>
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-slate-400">Rodadas Sobrevividas:</span>
+                  <strong className="text-slate-200">{turnCount}</strong>
+                </div>
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-slate-400">Itens Descobertos:</span>
+                  <strong className="text-slate-200">{inventory.length}</strong>
                 </div>
               </div>
 
-              <div className="text-right shrink-0">
-                <span className="text-[10px] font-mono uppercase text-slate-400 block">Total Geral:</span>
-                <strong className="text-base font-serif font-black text-amber-400 font-mono">
-                  {score} PTS
-                </strong>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => resetAdventure()}
+                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all shadow-md active:scale-98 cursor-pointer inline-flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Tentar Novamente (Reiniciar com 0 Pts)</span>
+              </motion.button>
+            </motion.div>
+          ) : gameState === "victory" ? (
+            /* VICTORY STATE WITH TRIUMPHANT MOTION FRAME */
+            <motion.div
+              key="scene-frame-victory"
+              initial={{ opacity: 0, scale: 0.93, y: 22, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.93, y: -18, filter: "blur(4px)" }}
+              transition={{ duration: 0.46, ease: [0.22, 1, 0.36, 1] }}
+              className="p-8 text-center space-y-5 rounded-2xl bg-emerald-950/30 border border-emerald-900/60 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent pointer-events-none" />
+              <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 border border-emerald-700 mx-auto flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/50">
+                <Trophy className="w-8 h-8" />
               </div>
-            </div>
-
-            {/* Inventory Badge Strip */}
-            {inventory.length > 0 && (
-              <div className="pt-2 border-t border-slate-850 flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-mono text-slate-400 uppercase font-semibold">
-                  Mochila ({inventory.length}):
+              <div className="space-y-2">
+                <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-bold">
+                  Conquista Épica
                 </span>
-                {inventory.map((item, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300 font-medium"
-                  >
-                    <Scroll className="w-3 h-3 text-amber-400" />
-                    <span>{item}</span>
-                  </span>
-                ))}
+                <h3 className="text-3xl font-serif font-black text-white">
+                  O Códice da Sabedoria foi Resgatado!
+                </h3>
+                <p className="text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
+                  Parabéns, <strong>{playerName}</strong>! Você superou todas as provas e enigmas das catacumbas e conquistou a glória dos sábios da academia!
+                </p>
               </div>
-            )}
 
-          </div>
-        )}
+              {/* Detailed Final Scoreboard */}
+              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 max-w-md mx-auto space-y-3 text-left">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800 pb-2">
+                  Boletim Final da Expedição
+                </h4>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-300">Pontuação Total:</span>
+                  <strong className="text-xl font-serif font-black text-amber-400">{score} Pontos</strong>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span>Classificação Obtida:</span>
+                  <strong className="text-emerald-400">
+                    {score >= 800 ? "Lenda da Academia" : score >= 500 ? "Mestre Estrategista" : "Explorador Notável"}
+                  </strong>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span>Vida Restante:</span>
+                  <strong className="text-slate-200">{currentHealth} / {maxHealth} HP</strong>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span>Relíquias no Inventário:</span>
+                  <strong className="text-slate-200">{inventory.length} itens</strong>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => resetAdventure()}
+                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all shadow-md active:scale-98 cursor-pointer inline-flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Jogar Novamente por Outro Caminho</span>
+              </motion.button>
+            </motion.div>
+          ) : (
+            /* ACTIVE PLAYING SCENARIO WITH SMOOTH FRAME TRANSITIONS & STAGGERED CHOICES */
+            <motion.div
+              key={`scenario-frame-${currentSceneId}`}
+              initial={{ opacity: 0, y: 18, scale: 0.985, filter: "blur(3px)" }}
+              animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -14, scale: 0.985, filter: "blur(3px)" }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-6 relative"
+            >
+              {/* Subtle Ambient Shimmer on Scenario Entry */}
+              <div className="absolute -top-2 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-500/35 to-transparent pointer-events-none" />
+
+              {/* Scenario Header Frame */}
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.28, delay: 0.05 }}
+                className="space-y-2 border-b border-slate-800/80 pb-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
+                    {currentScene.locationKicker}
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">
+                    {currentScene.storyPathName} · Rodada #{turnCount}
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-serif font-black text-slate-100 tracking-tight">
+                  {currentScene.title}
+                </h3>
+              </motion.div>
+
+              {/* Narrative Scenario Text Frame */}
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.32, delay: 0.1 }}
+                className="space-y-3 text-slate-300 text-sm sm:text-base leading-relaxed"
+              >
+                <p>{currentScene.narrativeText}</p>
+                {currentScene.atmosphereText && (
+                  <p className="text-xs sm:text-sm text-slate-400 italic bg-slate-900/60 p-3 rounded-xl border border-slate-850">
+                    "{currentScene.atmosphereText}"
+                  </p>
+                )}
+              </motion.div>
+
+              {/* SAVED GAME RESUME PROMPT (when saved game exists in localStorage) */}
+              {savedGame && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-amber-500/30 space-y-3 relative overflow-hidden"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                        <BookmarkCheck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold block">
+                          Jogo Salvo Encontrado no Navegador
+                        </span>
+                        <h4 className="text-sm font-semibold text-slate-100">
+                          {savedGame.sceneTitle}
+                        </h4>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-400">
+                      Salvo em: {savedGame.formattedDate}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="p-2 rounded-xl bg-slate-950/80 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-mono">PONTUAÇÃO</span>
+                      <strong className="text-amber-400 font-serif font-black text-sm">{savedGame.score} pts</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-950/80 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-mono">RODADA</span>
+                      <strong className="text-slate-200 font-mono text-sm">#{savedGame.turnCount}</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-950/80 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-mono">PONTOS DE VIDA</span>
+                      <strong className="text-slate-200 font-mono text-sm">{savedGame.currentHealth} / {savedGame.maxHealth} HP</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-950/80 border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-mono">MOCHILA</span>
+                      <strong className="text-slate-200 font-mono text-sm">{savedGame.inventory?.length || 0} itens</strong>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleLoadSavedGame}
+                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm hover:shadow active:scale-98"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Continuar de Onde Parou ({savedGame.score} pts)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDeleteSavedGame}
+                      className="px-3 py-1.5 rounded-xl text-slate-400 hover:text-rose-400 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer hover:bg-rose-950/20"
+                      title="Excluir o jogo salvo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Descartar Save</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Multiple Choices Section with Staggered Frame Animations */}
+              <div className="space-y-3 pt-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold block">
+                  Escolha sua próxima ação:
+                </span>
+
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: { staggerChildren: 0.07, delayChildren: 0.12 }
+                    }
+                  }}
+                  className="grid grid-cols-1 gap-3"
+                >
+                  {currentScene.choices.map((choice, idx) => (
+                    <motion.button
+                      key={choice.id}
+                      variants={{
+                        hidden: { opacity: 0, y: 10, scale: 0.99 },
+                        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.28, ease: "easeOut" } }
+                      }}
+                      whileHover={{ scale: 1.01, x: 2 }}
+                      whileTap={{ scale: 0.99 }}
+                      type="button"
+                      onClick={() => handleMakeChoice(choice)}
+                      className="p-4 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 transition-colors text-left flex items-start justify-between gap-4 group cursor-pointer"
+                    >
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-800 text-[11px] font-mono text-amber-400 font-bold flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+                            {idx + 1}
+                          </span>
+                          <strong className="text-sm font-semibold text-slate-100 group-hover:text-amber-300 transition-colors">
+                            {choice.label}
+                          </strong>
+                        </div>
+                        <p className="text-xs text-slate-400 pl-7">
+                          {choice.description}
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 flex items-center gap-2 pt-0.5">
+                        {choice.scorePoints > 0 && (
+                          <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-bold">
+                            +{choice.scorePoints} pts
+                          </span>
+                        )}
+                        <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                      </div>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              </div>
+
+              {/* =========================================================================
+                  TURN SCORE SUMMARY (Displays score to player at the end of each turn!)
+                  ========================================================================= */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.25 }}
+                className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block font-semibold">
+                      Pontuação nesta Rodada #{turnCount - 1 > 0 ? turnCount - 1 : 1}:
+                    </span>
+                    <span className="font-semibold text-slate-200">
+                      {lastTurnScoreGained > 0 ? (
+                        <>+{lastTurnScoreGained} pontos conquistados ({lastScoreReason || "Avanço da história"})</>
+                      ) : (
+                        "Início da expedição com 0 pontos acumulados."
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block">Total Geral:</span>
+                  <strong className="text-base font-serif font-black text-amber-400 font-mono">
+                    {score} PTS
+                  </strong>
+                </div>
+              </motion.div>
+
+              {/* Inventory Badge Strip */}
+              {inventory.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="pt-2 border-t border-slate-850 flex items-center gap-2 flex-wrap"
+                >
+                  <span className="text-[11px] font-mono text-slate-400 uppercase font-semibold">
+                    Mochila ({inventory.length}):
+                  </span>
+                  {inventory.map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300 font-medium"
+                    >
+                      <Scroll className="w-3 h-3 text-amber-400" />
+                      <span>{item}</span>
+                    </span>
+                  ))}
+                </motion.div>
+              )}
+
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
 
